@@ -1,103 +1,154 @@
 package org.j3y.HuskerBot2.commands.other
 
 import net.dv8tion.jda.api.EmbedBuilder
-import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.interactions.components.buttons.Button
 import org.j3y.HuskerBot2.commands.SlashCommand
-import org.j3y.HuskerBot2.model.PaginatedUrbanResult
-import org.j3y.HuskerBot2.service.PaginationService
 import org.j3y.HuskerBot2.service.UrbanDictionaryService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.awt.Color
-import java.time.Instant
 
 @Component
 class UrbanDictionary(
-    private val urbanDictionaryService: UrbanDictionaryService,
-    private val paginationService: PaginationService
+    private val urbanDictionaryService: UrbanDictionaryService
 ) : SlashCommand() {
     
-    private val logger = LoggerFactory.getLogger(UrbanDictionary::class.java)
+    private val log = LoggerFactory.getLogger(UrbanDictionary::class.java)
     
-    override fun getCommandKey(): String = "urban-dictionary"
-    override fun getDescription(): String = "Look up a word or phrase on Urban Dictionary"
+    override fun getCommandKey(): String = "urbandictionary"
+    override fun getDescription(): String = "Search Urban Dictionary for a term"
     override fun getOptions(): List<OptionData> = listOf(
-        OptionData(OptionType.STRING, "word", "The word or phrase to look up", true)
+        OptionData(OptionType.STRING, "term", "The term to define", true)
     )
     
-    override fun execute(event: SlashCommandInteractionEvent) {
-        val word = event.getOption("word")?.asString
-        if (word.isNullOrBlank()) {
-            event.reply("Please provide a word to look up!").setEphemeral(true).queue()
-            return
-        }
-        
-        logger.info("Urban Dictionary search for term: $word by user: ${event.user.asTag}")
-        
-        event.deferReply().queue()
-        
+    override fun execute(commandEvent: SlashCommandInteractionEvent) {
+        commandEvent.deferReply().queue()
         try {
-            val definitions = urbanDictionaryService.searchDefinitions(word.trim())
-            
-            if (definitions.isNullOrEmpty()) {
-                logger.warn("No definitions found for term: $word")
-                event.hook.sendMessage("No definitions found for \"$word\". Try a different spelling or term.").queue()
+            val term = commandEvent.getOption("term")?.asString?.trim()
+            if (term.isNullOrEmpty()) {
+                commandEvent.hook.sendMessage("Please provide a term to search.").queue()
                 return
             }
             
-            // Create pagination
-            val userId = event.user.id
-            event.hook.sendMessage("Loading...").queue { response ->
-                val messageId = response.id
-                val pageData = paginationService.createPagination(userId, messageId, definitions, word)
-                
-                val embed = createUrbanEmbed(pageData)
-                val buttons = paginationService.createPaginationButtons(definitions.size > 1)
-                
-                response.editOriginal()
-                    .setEmbeds(embed)
-                    .setActionRow(buttons)
-                    .queue()
+            val defs = urbanDictionaryService.defineAll(term)
+            if (defs.isEmpty()) {
+                commandEvent.hook.sendMessage("No results found for '$term'.").queue()
+                return
             }
             
+            val userId = commandEvent.user.id
+            val index = 0
+            val total = defs.size
+            val embed = buildEmbed(defs[index], index, total)
+            val buttons = buildButtons(term, index, total, userId)
+            
+            commandEvent.hook.sendMessageEmbeds(embed).setActionRow(buttons).queue()
         } catch (e: Exception) {
-            logger.error("Error executing urban-dictionary command for word: $word", e)
-            event.hook.sendMessage("Sorry, there was an error looking up that word. Please try again later.").queue()
+            log.error("Error executing /urbandictionary command", e)
+            commandEvent.hook.sendMessage("Sorry, there was an error searching Urban Dictionary.").queue()
         }
     }
     
-    private fun createUrbanEmbed(pageData: PaginatedUrbanResult): MessageEmbed {
-        val definition = pageData.definitions[pageData.currentPage]
-        
-        val embed = EmbedBuilder()
-        
-        embed.setTitle("📚 ${definition.word}")
-        embed.setColor(Color.ORANGE)
-        embed.setUrl(definition.permalink)
-        
-        // Definition
-        embed.addField("Definition", definition.definition, false)
-        
-        // Example (if available and not empty)
-        if (definition.example.isNotBlank()) {
-            embed.addField("Example", definition.example, false)
+    override fun buttonEvent(event: ButtonInteractionEvent) {
+        val id = event.componentId
+        if (!id.startsWith("urbandictionary|")) return
+        try {
+            val parts = id.split("|")
+            if (parts.size < 6) return
+            val action = parts[1]
+            val term = parts[2]
+            val index = parts[3].toIntOrNull() ?: 0
+            val totalFromId = parts[4].toIntOrNull() ?: 0
+            val userId = parts[5]
+            
+            if (event.user.id != userId) {
+                event.reply("Only the requester can use these buttons.").setEphemeral(true).queue()
+                return
+            }
+            
+            val defs = urbanDictionaryService.defineAll(term)
+            val total = if (defs.isNotEmpty()) defs.size else totalFromId
+            if (defs.isEmpty()) {
+                event.reply("No more results available.").setEphemeral(true).queue()
+                return
+            }
+            
+            val newIndex = when (action) {
+                "first" -> 0
+                "prev" -> (index - 1).coerceAtLeast(0)
+                "next" -> (index + 1).coerceAtMost(total - 1)
+                "last" -> total - 1
+                else -> index
+            }
+            
+            val def = defs[newIndex]
+            
+            val embed = EmbedBuilder()
+                .setTitle("Urban Dictionary: ${def.word}", def.permalink)
+                .setColor(Color(0x1D, 0xA1, 0xF2))
+                .addField("Definition", truncate(def.definition, 1024), false)
+                .apply {
+                    val example = def.example?.takeIf { it.isNotBlank() }
+                    if (example != null) {
+                        addField("Example", truncate(example, 1024), false)
+                    }
+                    def.author?.let { addField("Author", it, true) }
+                }
+                .setFooter("Result ${newIndex + 1} of $total")
+                .build()
+                
+            val buttons = listOf(
+                Button.secondary("urbandictionary|first|$term|$newIndex|$total|$userId", "⏮ First").withDisabled(newIndex <= 0),
+                Button.secondary("urbandictionary|prev|$term|$newIndex|$total|$userId", "◀ Prev").withDisabled(newIndex <= 0),
+                Button.secondary("urbandictionary|next|$term|$newIndex|$total|$userId", "Next ▶").withDisabled(newIndex >= total - 1),
+                Button.secondary("urbandictionary|last|$term|$newIndex|$total|$userId", "Last ⏭").withDisabled(newIndex >= total - 1),
+            )
+            
+            event.editMessageEmbeds(embed).setActionRow(buttons).queue()
+        } catch (e: Exception) {
+            log.error("Error handling urbandictionary button interaction", e)
+            event.reply("An error occurred processing that action.").setEphemeral(true).queue()
         }
-        
-        // Stats
-        embed.addField("👍", definition.thumbsUp.toString(), true)
-        embed.addField("👎", definition.thumbsDown.toString(), true)
-        embed.addField("Author", definition.author, true)
-        
-        // Page info
-        if (pageData.totalPages > 1) {
-            embed.setFooter("Page ${pageData.currentPage + 1} of ${pageData.totalPages}")
-        }
-        
-        embed.setTimestamp(Instant.now())
-        
-        return embed.build()
+    }
+    
+    private fun buildEmbed(def: UrbanDictionaryService.UrbanDefinition, index: Int, total: Int): net.dv8tion.jda.api.entities.MessageEmbed {
+        val footer = "Result ${index + 1} of $total"
+        return EmbedBuilder()
+            .setTitle("Urban Dictionary: ${def.word}", def.permalink)
+            .setColor(Color(0x1D, 0xA1, 0xF2))
+            .addField("Definition", truncate(def.definition, 1024), false)
+            .apply {
+                val example = def.example?.takeIf { it.isNotBlank() }
+                if (example != null) {
+                    addField("Example", truncate(example, 1024), false)
+                }
+                def.author?.let { addField("Author", it, true) }
+            }
+            .setFooter(footer)
+            .build()
+    }
+    
+    private fun buildButtons(term: String, index: Int, total: Int, userId: String): List<Button> {
+        val firstId = "urbandictionary|first|$term|$index|$total|$userId"
+        val prevId = "urbandictionary|prev|$term|$index|$total|$userId"
+        val nextId = "urbandictionary|next|$term|$index|$total|$userId"
+        val lastId = "urbandictionary|last|$term|$index|$total|$userId"
+        val atStart = index <= 0
+        val atEnd = index >= total - 1
+        return listOf(
+            Button.secondary(firstId, "⏮ First").withDisabled(atStart),
+            Button.secondary(prevId, "◀ Prev").withDisabled(atStart),
+            Button.secondary(nextId, "Next ▶").withDisabled(atEnd),
+            Button.secondary(lastId, "Last ⏭").withDisabled(atEnd),
+        )
+    }
+    
+    private fun truncate(text: String, max: Int): String {
+        if (text.length <= max) return text
+        return text.substring(0, max - 3) + "..."
     }
 }

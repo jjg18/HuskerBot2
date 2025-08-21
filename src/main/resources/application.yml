@@ -42,16 +42,7 @@ weather:
     coordinates-ttl: 86400
     forecast-ttl: 1800
 
-urban-dictionary:
-  api:
-    base-url: "https://unofficialurbandictionaryapi.com/api"
-    timeout: 10000
-  pagination:
-    timeout-minutes: 15
-    cleanup-interval: 300000
-  content:
-    max-definition-length: 1024
-    max-example-length: 512
-  cache:
-    definitions-ttl: 3600
+urban:
+  base-url: "https://api.urbandictionary.com"
+  user-agent: "HuskerBot2 (huskerbot@example.com)"
 
