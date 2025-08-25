@@ -25,11 +25,15 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-cache")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
+	implementation("com.github.kagkarlsson:db-scheduler-spring-boot-starter:15.6+")
 	implementation("com.github.ben-manes.caffeine:caffeine")
 	implementation("net.dv8tion:JDA:5.6.+")
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.+")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("org.bytedeco:opencv-platform:4.9.0-1.5.10") // OpenCV for eye detection for deepfry
+	implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0") // ImageIO WebP support for deepfry
+
 	runtimeOnly("com.h2database:h2")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	

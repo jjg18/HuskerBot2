@@ -8,7 +8,6 @@ import org.j3y.HuskerBot2.util.WeekResolver
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 
@@ -21,7 +20,7 @@ class BetProcessing {
     @Autowired lateinit var betRepo: BetRepo
     @Autowired lateinit var scheduleRepo: ScheduleRepo
 
-    @Scheduled(cron = "0 0 2 * * MON", zone = "America/Chicago")
+    // Every Monday at 2:00 AM Central (db-scheduler recurring task configured)
     final fun processBets() {
         return processBets(WeekResolver.currentCfbWeek() - 1)
     }

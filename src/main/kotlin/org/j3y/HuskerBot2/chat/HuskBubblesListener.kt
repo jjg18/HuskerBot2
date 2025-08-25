@@ -8,7 +8,10 @@ import org.springframework.stereotype.Component
 import kotlin.random.Random
 
 @Component
-class HuskBubblesListener : ListenerAdapter() {
+class HuskBubblesListener(
+    // Testability seam: allows deterministic tests by injecting probability supplier
+    private val probabilitySupplier: () -> Double = { Random.nextDouble() }
+) : ListenerAdapter() {
     private final val log = LoggerFactory.getLogger(HuskBubblesListener::class.java)
 
     // Target Discord user ID to watch for
@@ -28,7 +31,7 @@ class HuskBubblesListener : ListenerAdapter() {
             if (author.idLong != targetUserId) return
 
             // 5% chance to react
-            if (Random.nextDouble() < 0.05) {
+            if (probabilitySupplier.invoke() < 0.05) {
                 message.addReaction(bubblesEmoji).queue(
                     { /* success - no op */ },
                     { ex -> log.warn("Failed to add bubbles reaction", ex) }

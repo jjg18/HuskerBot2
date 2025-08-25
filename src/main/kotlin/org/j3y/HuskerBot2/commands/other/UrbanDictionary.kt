@@ -55,8 +55,8 @@ class UrbanDictionary : SlashCommand() {
         }
     }
 
-    override fun buttonEvent(event: ButtonInteractionEvent) {
-        val id = event.componentId
+    override fun buttonEvent(buttonEvent: ButtonInteractionEvent) {
+        val id = buttonEvent.componentId
         if (!id.startsWith("ud|")) return
         try {
             val parts = id.split("|")
@@ -70,7 +70,7 @@ class UrbanDictionary : SlashCommand() {
             val defs = urbanService.defineAll(term)
             val total = if (defs.isNotEmpty()) defs.size else totalFromId
             if (defs.isEmpty()) {
-                event.reply("No more results available.").setEphemeral(true).queue()
+                buttonEvent.reply("No more results available.").setEphemeral(true).queue()
                 return
             }
 
@@ -105,10 +105,10 @@ class UrbanDictionary : SlashCommand() {
                 net.dv8tion.jda.api.interactions.components.buttons.Button.secondary("ud|last|$term|$newIndex|$total|$userId", "Last ⏭").withDisabled(newIndex >= total - 1),
             )
 
-            event.editMessageEmbeds(embed).setActionRow(buttons).queue()
+            buttonEvent.editMessageEmbeds(embed).setActionRow(buttons).queue()
         } catch (e: Exception) {
             log.error("Error handling UD button interaction", e)
-            event.reply("An error occurred processing that action.").setEphemeral(true).queue()
+            buttonEvent.reply("An error occurred processing that action.").setEphemeral(true).queue()
         }
     }
 

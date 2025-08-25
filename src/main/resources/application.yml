@@ -1,8 +1,6 @@
 spring:
   application:
     name: HuskerBot2
-  main:
-    allow-circular-references: true
 
   datasource:
     url: jdbc:h2:file:~/.discordbot/data
@@ -19,7 +17,7 @@ spring:
       path: /h2-console
 
 discord:
-  token: ""
+  token: ${DISCORD-TOKEN:}
 
   guilds:
     - 1407527947761488085 # Husker Bot Test Discord
@@ -35,6 +33,7 @@ discord:
     recruiting: 1407823800824889445
     admin: 1407823859155206224
     nfl-pickem: 1408123966438244403
+    announcements: 1407527948713590887 #1407823859155206225
 
 weather:
   nominatim:
@@ -53,7 +52,7 @@ weather:
 cfbd:
   base-url: "https://api.collegefootballdata.com"
   user-agent: "HuskerBot2 (huskerbot@example.com)"
-  api-key: ""
+  api-key: ${CFBD-KEY:}
   cache:
     matchup-ttl: 3600
 
@@ -61,10 +60,14 @@ urban:
   base-url: "https://api.urbandictionary.com"
   user-agent: "HuskerBot2 (huskerbot@example.com)"
 
+backup:
+  sql:
+    dir: build/backups-sql
+
 gemini:
   base-url: "https://generativelanguage.googleapis.com"
   model: "models/gemini-2.5-flash"
-  api-key: ""
+  api-key: ${GEMINI-KEY:}
 
 ---
 # Activate this block by setting SPRING_PROFILES_ACTIVE=mysql

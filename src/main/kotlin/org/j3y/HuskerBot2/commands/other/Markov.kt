@@ -5,7 +5,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import org.j3y.HuskerBot2.commands.SlashCommand
 import org.slf4j.LoggerFactory
@@ -44,7 +43,7 @@ class Markov : SlashCommand() {
 
             // Fetch messages in pages of up to 100
             val messages = fetchRecentMessages(channel, limit)
-                .filter { shouldIncludeMessage(it, commandEvent.user) }
+                .filter { shouldIncludeMessage(it) }
 
             val corpus = messages.joinToString("\n") { it.contentStripped }
             if (corpus.isBlank()) {
@@ -89,7 +88,7 @@ class Markov : SlashCommand() {
         }
     }
 
-    private fun shouldIncludeMessage(message: Message, requester: User): Boolean {
+    private fun shouldIncludeMessage(message: Message): Boolean {
         if (message.author.isBot) return false
         val content = message.contentRaw.trim()
         if (content.isBlank()) return false

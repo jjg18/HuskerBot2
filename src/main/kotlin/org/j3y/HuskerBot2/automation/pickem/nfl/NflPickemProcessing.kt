@@ -17,7 +17,7 @@ import org.j3y.HuskerBot2.util.WeekResolver
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.context.annotation.Lazy
 import java.awt.Color
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -30,13 +30,12 @@ class NflPickemProcessing {
     private final val log = LoggerFactory.getLogger(NflPickemProcessing::class.java)
 
     @Autowired private lateinit var nflPickRepo: NflPickRepo
-    @Autowired lateinit var jda: JDA
+    @Autowired @Lazy lateinit var jda: JDA
     @Autowired lateinit var espnService: EspnService
     @Autowired lateinit var nflGameRepo: NflGameRepo
     @Value("\${discord.channels.nfl-pickem}") lateinit var pickemChannelId: String
 
-    // Every Tuesday at 2:00 AM Central
-    @Scheduled(cron = "0 0 2 * * TUE", zone = "America/Chicago")
+    // Every Tuesday at 2:00 AM Central (db-scheduler recurring task configured)
     fun postWeeklyPickem() {
         processPreviousWeek()
         deleteAllPosts()
@@ -267,7 +266,7 @@ class NflPickemProcessing {
         }
 
         events.forEach { event ->
-            val (awayName, awayId, homeName, homeId, eventId) = extractIds(event)
+            val (_, awayId, _, homeId, eventId) = extractIds(event)
             val status = event.path("status").path("type").path("name").asText("TBD")
 
             if (status != "STATUS_FINAL") {

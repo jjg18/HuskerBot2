@@ -39,7 +39,7 @@ class DiscordConfig {
                 GatewayIntent.MESSAGE_CONTENT,
                 GatewayIntent.GUILD_MESSAGES,
                 GatewayIntent.GUILD_MEMBERS,
-                GatewayIntent.GUILD_EMOJIS_AND_STICKERS,
+                GatewayIntent.GUILD_EXPRESSIONS,
                 GatewayIntent.GUILD_MESSAGE_REACTIONS
             ))
             .addEventListeners(*listeners)

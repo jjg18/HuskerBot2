@@ -19,11 +19,11 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @Service
-class DefaultEspnService : EspnService {
+class DefaultEspnService(
+    private val client: RestTemplate = RestTemplate()
+) : EspnService {
 
     private final val log = LoggerFactory.getLogger(DefaultEspnService::class.java)
-
-    private final val client = RestTemplate()
 
     private final val FORMATTER_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd")
     private final val FORMATTER_NHL_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")

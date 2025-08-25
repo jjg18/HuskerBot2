@@ -2,7 +2,6 @@ package org.j3y.HuskerBot2.automation.pickem.nfl
 
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import org.j3y.HuskerBot2.commands.pickem.NflPickemShow
 import org.j3y.HuskerBot2.model.NflPick

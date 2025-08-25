@@ -3,7 +3,6 @@ package org.j3y.HuskerBot2.util
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.ZoneOffset
 
 /**
  * Utility to resolve the current "week" index given a list of week start timestamps.
@@ -63,22 +62,22 @@ object WeekResolver {
 
     @JvmStatic
     fun currentCfbWeek(): Int {
-        return currentWeek(collegeWeeks, Instant.now());
+        return currentWeek(collegeWeeks, Instant.now())
     }
 
     @JvmStatic
     fun getCfbWeek(dateTime: Instant): Int {
-        return currentWeek(collegeWeeks, dateTime);
+        return currentWeek(collegeWeeks, dateTime)
     }
 
     @JvmStatic
     fun currentNflWeek(): Int {
-        return currentWeek(nflWeeks, Instant.now());
+        return currentWeek(nflWeeks, Instant.now())
     }
 
     @JvmStatic
     fun getNflWeek(dateTime: Instant): Int {
-        return currentWeek(nflWeeks, dateTime);
+        return currentWeek(nflWeeks, dateTime)
     }
 
     /**

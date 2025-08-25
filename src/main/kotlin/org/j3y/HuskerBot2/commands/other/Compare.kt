@@ -11,8 +11,6 @@ import org.j3y.HuskerBot2.service.CfbMatchupService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.awt.Color
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Component
 class Compare(
@@ -65,8 +63,8 @@ class Compare(
         }
     }
     
-    override fun buttonEvent(event: ButtonInteractionEvent) {
-        val id = event.componentId
+    override fun buttonEvent(buttonEvent: ButtonInteractionEvent) {
+        val id = buttonEvent.componentId
         if (!id.startsWith("compare|")) return
         
         try {
@@ -81,7 +79,7 @@ class Compare(
             
             val matchupData = cfbMatchupService.getTeamMatchup(team1, team2)
             if (matchupData == null) {
-                event.reply("Could not load matchup data.").setEphemeral(true).queue()
+                buttonEvent.reply("Could not load matchup data.").setEphemeral(true).queue()
                 return
             }
             
@@ -97,11 +95,11 @@ class Compare(
             val embed = buildMatchupEmbed(matchupData, newPage)
             val buttons = buildPaginationButtons(team1, team2, newPage, matchupData.games.size, userId)
             
-            event.editMessageEmbeds(embed).setActionRow(buttons).queue()
+            buttonEvent.editMessageEmbeds(embed).setActionRow(buttons).queue()
             
         } catch (e: Exception) {
             log.error("Error handling compare button interaction", e)
-            event.reply("An error occurred processing that action.").setEphemeral(true).queue()
+            buttonEvent.reply("An error occurred processing that action.").setEphemeral(true).queue()
         }
     }
     
