@@ -17,7 +17,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 
 @Component
 class GamedayWeather : SlashCommand() {
@@ -42,7 +41,6 @@ class GamedayWeather : SlashCommand() {
             }
             
             // Let WeatherService handle the API selection and fallback logic
-            
             val gameLocation = getGameLocation(nextGame)
             val coordinates = weatherService.getCoordinates(gameLocation)
             if (coordinates == null) {
@@ -122,6 +120,11 @@ class GamedayWeather : SlashCommand() {
         embed.addField("📍 Location", getGameLocation(game), true)
         embed.addField("🏠 Home/Away", if (isHomeGame(game)) "Home" else "Away", true)
         
+        // Show venue type for dome games
+        if (game.isDome) {
+            embed.addField("🏟️ Venue", "Dome/Indoor", true)
+        }
+        
         if (weather != null) {
             embed.addField("🌡️ Temperature", "${weather.temperature}°F", true)
             weather.micksTemp?.let {
@@ -136,9 +139,13 @@ class GamedayWeather : SlashCommand() {
                 embed.addField("☔ Rain Chance", "${it}%", true)
             }
             
-            // Add snarky description if available
-            weather.snarkyDescription?.let {
-                embed.addField("🔥 Forecast Hot Take", it, false)
+            // Add dome snark or regular snarky description
+            if (game.isDome) {
+                embed.addField("🔥 Forecast Hot Take", getDomeSnark(weather), false)
+            } else {
+                weather.snarkyDescription?.let {
+                    embed.addField("🔥 Forecast Hot Take", it, false)
+                }
             }
             
             embed.addField("📋 Detailed Forecast", weather.detailedForecast, false)
@@ -146,10 +153,56 @@ class GamedayWeather : SlashCommand() {
             embed.addField("⚠️ Weather", "Weather data unavailable", false)
         }
         
-        embed.setFooter("Weather data from Tomorrow.io (≤120 hours) or National Weather Service (>120 hours)")
+        val footerText = if (game.isDome) {
+            "Weather outside the dome - inside it's a perfect 72°F"
+        } else {
+            "Weather data from Tomorrow.io (≤120 hours) or National Weather Service (>120 hours)"
+        }
+        embed.setFooter(footerText)
         embed.setTimestamp(Instant.now())
         
         return embed.build()
+    }
+    
+    private fun getDomeSnark(weather: WeatherForecast): String {
+        val outsideTemp = weather.temperature
+        val conditions = weather.shortForecast.lowercase()
+        val isHistorical = conditions.contains("historical")
+        
+        // For historical averages, base snark on temperature only
+        if (isHistorical) {
+            return when {
+                outsideTemp < 20 -> "Historically it's around ${outsideTemp}°F this time of year, but who cares? " +
+                        "We're in a dome! While tailgaters bundle up in the parking lot, we'll be nice and toasty."
+                outsideTemp < 40 -> "History says it's usually around ${outsideTemp}°F outside this time of year. " +
+                        "Good thing we've got a roof - the only cold shoulder will be the one we give their offense."
+                outsideTemp > 90 -> "Historical temps average ${outsideTemp}°F this time of year. Brutal. " +
+                        "Thank the football gods for AC and dome life."
+                outsideTemp > 75 -> "Historically around ${outsideTemp}°F outside, but inside? A perfect 72°F. " +
+                        "Climate control beats climate every time. GBR!"
+                else -> "Historical averages say ${outsideTemp}°F outside, but it literally doesn't matter. " +
+                        "We're in a dome - perfect conditions, zero excuses. GBR!"
+            }
+        }
+        
+        // For actual forecasts, use conditions too
+        return when {
+            outsideTemp < 20 -> "It's ${outsideTemp}°F outside, but who cares? We're in a dome, baby! " +
+                    "While those poor souls freeze in the parking lot, we'll be nice and toasty watching the Huskers."
+            outsideTemp < 40 -> "A chilly ${outsideTemp}°F outside, but the only thing frozen in this dome " +
+                    "will be the opposing team's offense. Climate-controlled domination incoming."
+            outsideTemp > 90 -> "It's a scorching ${outsideTemp}°F outside, but we've got AC. " +
+                    "The only heat the other team will feel is from our defense."
+            conditions.contains("rain") || conditions.contains("storm") -> 
+                    "It's ${weather.shortForecast.lowercase()} outside, but not a single drop will fall on our turf. " +
+                    "Dome life is the best life. No weather excuses today!"
+            conditions.contains("snow") -> "Snow outside? That's cute. Meanwhile, we're playing " +
+                    "in perfect conditions. Mother Nature can't touch us in here."
+            conditions.contains("wind") -> "Windy outside? Cool story. Our passes will spiral perfectly " +
+                    "in this dome while the wind howls uselessly outside."
+            else -> "Weather outside: ${weather.shortForecast}. Weather inside: Perfect. " +
+                    "Who gives a damn about the forecast when you've got a roof? GBR!"
+        }
     }
     
     private fun formatGameTime(gameDateTime: Instant): String {

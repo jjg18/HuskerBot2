@@ -24,12 +24,16 @@ import kotlin.math.roundToInt
 
 @Service
 class WeatherService(
+    @Value("\${weather.geocode-maps.base-url}") private val geocodeMapsBaseUrl: String,
+    @Value("\${weather.geocode-maps.api-key}") private val geocodeMapsApiKey: String,
     @Value("\${weather.nominatim.base-url}") private val nominatimBaseUrl: String,
     @Value("\${weather.nominatim.rate-limit-delay}") private val rateLimitDelayMs: Long,
     @Value("\${weather.nws.base-url}") private val nwsBaseUrl: String,
     @Value("\${weather.nws.user-agent}") private val userAgent: String,
     @Value("\${weather.tomorrow.base-url}") private val tomorrowBaseUrl: String,
-    @Value("\${weather.tomorrow.api-key}") private val tomorrowApiKey: String
+    @Value("\${weather.tomorrow.api-key}") private val tomorrowApiKey: String,
+    @Value("\${weather.open-meteo.historical-base-url}") private val openMeteoHistoricalBaseUrl: String,
+    @Value("\${weather.open-meteo.years-for-average}") private val yearsForAverage: Int
 ) {
     
     @Autowired
@@ -49,6 +53,14 @@ class WeatherService(
             return hardcoded
         }
         
+        // Try geocode.maps.co first (primary provider - 25k requests/day free)
+        val geocodeMapsResult = searchGeocodeMaps(location)
+        if (geocodeMapsResult != null) {
+            return geocodeMapsResult
+        }
+        
+        // Fallback to Nominatim if geocode.maps.co fails
+        log.info("Falling back to Nominatim for geocoding: $location")
         return searchNominatim(location)
     }
     
@@ -56,9 +68,84 @@ class WeatherService(
         // Normalize location string for comparison
         val normalized = location.trim().lowercase().replace(Regex("\\s+"), " ")
         
-        return when (normalized) {
-            "lincoln, ne", "lincoln, nebraska" -> GeocodingResult(40.818996724, -96.70333052)
-            "omaha, ne", "omaha, nebraska" -> GeocodingResult(41.2565, -95.9345)
+        return when {
+            // Nebraska - Memorial Stadium
+            normalized.contains("lincoln") && (normalized.contains("ne") || normalized.contains("nebraska")) -> 
+                GeocodingResult(40.8206, -96.7056)
+            
+            // Big Ten Stadiums - for away games
+            // Ohio State - Ohio Stadium
+            normalized.contains("columbus") && (normalized.contains("oh") || normalized.contains("ohio")) -> 
+                GeocodingResult(40.0017, -83.0197)
+            
+            // Michigan - Michigan Stadium (The Big House)
+            normalized.contains("ann arbor") && (normalized.contains("mi") || normalized.contains("michigan")) -> 
+                GeocodingResult(42.2658, -83.7486)
+            
+            // Penn State - Beaver Stadium
+            normalized.contains("state college") || normalized.contains("university park") -> 
+                GeocodingResult(40.8122, -77.8561)
+            
+            // Wisconsin - Camp Randall Stadium
+            normalized.contains("madison") && (normalized.contains("wi") || normalized.contains("wisconsin")) -> 
+                GeocodingResult(43.0700, -89.4128)
+            
+            // Iowa - Kinnick Stadium
+            normalized.contains("iowa city") -> 
+                GeocodingResult(41.6589, -91.5508)
+            
+            // Minnesota - Huntington Bank Stadium
+            normalized.contains("minneapolis") && (normalized.contains("mn") || normalized.contains("minnesota")) -> 
+                GeocodingResult(44.9765, -93.2248)
+            
+            // Illinois - Memorial Stadium
+            normalized.contains("champaign") || normalized.contains("urbana") -> 
+                GeocodingResult(40.0992, -88.2360)
+            
+            // Northwestern - Ryan Field
+            normalized.contains("evanston") -> 
+                GeocodingResult(42.0659, -87.6910)
+            
+            // Purdue - Ross-Ade Stadium
+            normalized.contains("west lafayette") -> 
+                GeocodingResult(40.4419, -86.9189)
+            
+            // Indiana - Memorial Stadium
+            normalized.contains("bloomington") && (normalized.contains("in") || normalized.contains("indiana")) -> 
+                GeocodingResult(39.1807, -86.5258)
+            
+            // Maryland - SECU Stadium
+            normalized.contains("college park") -> 
+                GeocodingResult(38.9907, -76.9488)
+            
+            // Rutgers - SHI Stadium
+            normalized.contains("piscataway") || (normalized.contains("new brunswick") && normalized.contains("nj")) -> 
+                GeocodingResult(40.5138, -74.4653)
+            
+            // Michigan State - Spartan Stadium
+            normalized.contains("east lansing") -> 
+                GeocodingResult(42.7284, -84.4822)
+            
+            // UCLA - Rose Bowl (temporary) / new stadium
+            normalized.contains("pasadena") || (normalized.contains("los angeles") && normalized.contains("ucla")) -> 
+                GeocodingResult(34.1614, -118.1676)
+            
+            // USC - LA Memorial Coliseum
+            normalized.contains("los angeles") && (normalized.contains("ca") || normalized.contains("usc") || normalized.contains("coliseum")) -> 
+                GeocodingResult(34.0141, -118.2879)
+            
+            // Oregon - Autzen Stadium
+            normalized.contains("eugene") -> 
+                GeocodingResult(44.0582, -123.0687)
+            
+            // Washington - Husky Stadium
+            normalized.contains("seattle") -> 
+                GeocodingResult(47.6505, -122.3017)
+            
+            // Other common Nebraska locations
+            normalized.contains("omaha") && (normalized.contains("ne") || normalized.contains("nebraska")) -> 
+                GeocodingResult(41.2565, -95.9345)
+            
             else -> null
         }
     }
@@ -78,8 +165,9 @@ class WeatherService(
                 log.info("Using NWS API for forecast $daysUntilGame days out (beyond Tomorrow Weather 120-hour limit)")
                 getNWSWeatherForecast(latitude, longitude, targetDate)
             } else {
-                log.warn("Game is $daysUntilGame days out - beyond reliable weather forecast range (7 days)")
-                null
+                // Beyond 7 days - use historical averages from Open-Meteo
+                log.info("Game is $daysUntilGame days out - using historical averages from Open-Meteo")
+                getHistoricalAverageForecast(latitude, longitude, targetDate)
             }
         } catch (e: Exception) {
             log.error("Error getting weather forecast for $latitude, $longitude", e)
@@ -139,6 +227,167 @@ class WeatherService(
             log.error("Error getting NWS forecast for $latitude, $longitude", e)
         }
         return null
+    }
+    
+    private fun getHistoricalAverageForecast(latitude: Double, longitude: Double, targetDate: LocalDateTime): WeatherForecast? {
+        try {
+            val historicalAverage = getHistoricalAverages(latitude, longitude, targetDate.toLocalDate())
+            if (historicalAverage != null) {
+                val avgTemp = (historicalAverage.averageHigh + historicalAverage.averageLow) / 2
+                val tempK = ((avgTemp - 32) * 5.0 / 9.0 + 273.15).roundToInt()
+                
+                val forecast = WeatherForecast(
+                    temperature = avgTemp,
+                    shortForecast = "Historical Average",
+                    detailedForecast = buildHistoricalDetailedForecast(historicalAverage, targetDate),
+                    windSpeed = historicalAverage.averageWindSpeed?.let { "${it.roundToInt()} mph" } ?: "Unknown",
+                    windDirection = "Variable",
+                    humidity = historicalAverage.averagePrecipitation?.let { 
+                        if (it > 0) "Avg ${String.format("%.1f", it)} in precipitation" else null 
+                    },
+                    precipitationProbability = null,
+                    micksTemp = "${tempK}K"
+                )
+                return addSnarkyDescriptionForHistorical(forecast, historicalAverage)
+            }
+        } catch (e: Exception) {
+            log.error("Error getting historical average forecast for $latitude, $longitude on $targetDate", e)
+        }
+        return null
+    }
+    
+    @Cacheable("historical-averages", unless = "#result == null")
+    fun getHistoricalAverages(latitude: Double, longitude: Double, targetDate: LocalDate): HistoricalWeatherAverage? {
+        try {
+            val headers = HttpHeaders()
+            headers.set("User-Agent", userAgent)
+            val entity = HttpEntity<String>(headers)
+            
+            // Query the same calendar date for the past N years
+            val currentYear = LocalDate.now().year
+            val startYear = currentYear - yearsForAverage
+            
+            // Build date list for the same month/day across years
+            val dates = (startYear until currentYear).mapNotNull { year ->
+                try {
+                    LocalDate.of(year, targetDate.month, targetDate.dayOfMonth)
+                } catch (e: Exception) {
+                    // Handle Feb 29 on non-leap years
+                    null
+                }
+            }
+            
+            if (dates.isEmpty()) {
+                log.warn("No valid historical dates found for ${targetDate.month}/${targetDate.dayOfMonth}")
+                return null
+            }
+            
+            // Query Open-Meteo for all historical data at once (more efficient)
+            val startDate = dates.first()
+            val endDate = dates.last()
+            
+            val url = "$openMeteoHistoricalBaseUrl?latitude=$latitude&longitude=$longitude" +
+                    "&start_date=$startDate&end_date=$endDate" +
+                    "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max" +
+                    "&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto"
+            
+            log.info("Fetching historical weather data from Open-Meteo for ${dates.size} years")
+            val response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                OpenMeteoHistoricalResponse::class.java
+            )
+            
+            val data = response.body?.daily
+            if (data == null || data.time.isNullOrEmpty()) {
+                log.warn("No historical data returned from Open-Meteo")
+                return null
+            }
+            
+            // Filter to only the specific calendar date across years
+            val targetMonth = targetDate.monthValue
+            val targetDay = targetDate.dayOfMonth
+            
+            val matchingIndices = data.time.mapIndexedNotNull { index, dateStr ->
+                val date = LocalDate.parse(dateStr)
+                if (date.monthValue == targetMonth && date.dayOfMonth == targetDay) index else null
+            }
+            
+            if (matchingIndices.isEmpty()) {
+                log.warn("No matching dates found in historical data for ${targetDate.month}/${targetDate.dayOfMonth}")
+                return null
+            }
+            
+            // Calculate averages from matching dates
+            val highTemps = matchingIndices.mapNotNull { data.temperature_2m_max?.getOrNull(it) }
+            val lowTemps = matchingIndices.mapNotNull { data.temperature_2m_min?.getOrNull(it) }
+            val precipitation = matchingIndices.mapNotNull { data.precipitation_sum?.getOrNull(it) }
+            val windSpeeds = matchingIndices.mapNotNull { data.windspeed_10m_max?.getOrNull(it) }
+            
+            if (highTemps.isEmpty() || lowTemps.isEmpty()) {
+                log.warn("Insufficient temperature data for historical average calculation")
+                return null
+            }
+            
+            val avgHigh = highTemps.average().roundToInt()
+            val avgLow = lowTemps.average().roundToInt()
+            val avgPrecip = if (precipitation.isNotEmpty()) precipitation.average() else null
+            val avgWind = if (windSpeeds.isNotEmpty()) windSpeeds.average() else null
+            
+            log.info("Calculated ${matchingIndices.size}-year average for ${targetDate.month} ${targetDate.dayOfMonth}: High=$avgHigh°F, Low=$avgLow°F")
+            
+            return HistoricalWeatherAverage(
+                averageHigh = avgHigh,
+                averageLow = avgLow,
+                averagePrecipitation = avgPrecip,
+                averageWindSpeed = avgWind,
+                yearsOfData = matchingIndices.size
+            )
+        } catch (e: Exception) {
+            log.error("Error fetching historical averages from Open-Meteo: ${e.message}", e)
+            return null
+        }
+    }
+    
+    private fun buildHistoricalDetailedForecast(avg: HistoricalWeatherAverage, targetDate: LocalDateTime): String {
+        val parts = mutableListOf<String>()
+        parts.add("Based on ${avg.yearsOfData}-year historical average for ${targetDate.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${targetDate.dayOfMonth}")
+        parts.add("Average high: ${avg.averageHigh}°F, Average low: ${avg.averageLow}°F")
+        avg.averageWindSpeed?.let { parts.add("Average wind: ${it.roundToInt()} mph") }
+        avg.averagePrecipitation?.let { 
+            if (it > 0.01) parts.add("Average precipitation: ${String.format("%.2f", it)} inches") 
+        }
+        return parts.joinToString(". ") + "."
+    }
+    
+    private fun addSnarkyDescriptionForHistorical(forecast: WeatherForecast, avg: HistoricalWeatherAverage): WeatherForecast {
+        return try {
+            val weatherPrompt = createHistoricalWeatherPrompt(avg)
+            val snarkyDescription = googleGeminiService.generateText(weatherPrompt)
+            forecast.copy(snarkyDescription = snarkyDescription)
+        } catch (e: Exception) {
+            log.error("Error generating snarky weather description for historical forecast", e)
+            forecast
+        }
+    }
+    
+    private fun createHistoricalWeatherPrompt(avg: HistoricalWeatherAverage): String {
+        return """
+            Create a hilariously snarky and unhinged weather forecast description for a Nebraska Huskers football game. 
+            This is a HISTORICAL AVERAGE forecast (not a real-time prediction) because the game is more than a week away.
+            Keep it under 100 words and make it brutally honest but entertaining. Include references to how this weather 
+            will affect the game, the fans, and general Nebraska football culture. Feel free to joke about how we're 
+            basically guessing based on history.
+            
+            Historical weather details (${avg.yearsOfData}-year average):
+            - Average High: ${avg.averageHigh}°F
+            - Average Low: ${avg.averageLow}°F
+            - Average Wind: ${avg.averageWindSpeed?.roundToInt() ?: "Unknown"} mph
+            ${avg.averagePrecipitation?.let { "- Average Precipitation: ${String.format("%.2f", it)} inches" } ?: ""}
+            
+            Make it spicy but keep it family-friendly for Discord. Remind everyone this is just historical data, not a crystal ball.
+        """.trimIndent()
     }
     
     private fun findTomorrowForecastForDate(weatherData: TomorrowWeatherResponse, targetDate: LocalDateTime, useHourly: Boolean): WeatherForecast? {
@@ -324,6 +573,51 @@ class WeatherService(
             in 248..292 -> "W"
             in 293..337 -> "NW"
             else -> "Variable"
+        }
+    }
+    
+    private fun searchGeocodeMaps(location: String): GeocodingResult? {
+        // Skip if no API key configured
+        if (geocodeMapsApiKey.isBlank()) {
+            log.warn("geocode.maps.co API key not configured, skipping")
+            return null
+        }
+        
+        return try {
+            val headers = HttpHeaders()
+            headers.set("User-Agent", userAgent)
+            val entity = HttpEntity<String>(headers)
+            
+            val encodedLocation = URLEncoder.encode(location, StandardCharsets.UTF_8)
+            val url = "$geocodeMapsBaseUrl/search?q=$encodedLocation&api_key=$geocodeMapsApiKey"
+            
+            log.info("Geocoding location via geocode.maps.co: $location")
+            val response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                Array<JsonNode>::class.java
+            )
+            
+            val results = response.body
+            if (results != null && results.isNotEmpty()) {
+                val result = results[0]
+                val lat = result.get("lat").asText().toDoubleOrNull()
+                val lon = result.get("lon").asText().toDoubleOrNull()
+                if (lat != null && lon != null) {
+                    log.info("Found coordinates via geocode.maps.co for $location: $lat, $lon")
+                    GeocodingResult(lat, lon)
+                } else {
+                    log.warn("Invalid coordinates returned from geocode.maps.co for: $location")
+                    null
+                }
+            } else {
+                log.warn("No coordinates found via geocode.maps.co for: $location")
+                null
+            }
+        } catch (e: Exception) {
+            log.error("Error geocoding location via geocode.maps.co: $location - ${e.message}", e)
+            null
         }
     }
     

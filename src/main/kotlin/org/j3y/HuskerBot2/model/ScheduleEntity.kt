@@ -15,6 +15,7 @@ class ScheduleEntity(
     var location: String = "",
     var isConference: Boolean = false,
     var venueType: String = "",
+    var venue: String = "",
     var dateTime: Instant = Instant.now(),
     var season: Int = 2025,
     var week: Int = 0,
@@ -24,4 +25,5 @@ class ScheduleEntity(
     var spread: String = "",
     var overUnder: Double? = null,
     var completed: Boolean? = false,
+    var isDome: Boolean = false,
 )

@@ -43,6 +43,9 @@ discord:
 text-file-directory: build/text
 
 weather:
+  geocode-maps:
+    base-url: "https://geocode.maps.co"
+    api-key: ${GEOCODE_MAPS_KEY:}
   nominatim:
     base-url: "https://nominatim.openstreetmap.org"
     rate-limit-delay: 1000
@@ -52,6 +55,9 @@ weather:
   tomorrow:
     base-url: "https://api.tomorrow.io/v4"
     api-key: ${TOMORROW_WEATHER_KEY:}
+  open-meteo:
+    historical-base-url: "https://archive-api.open-meteo.com/v1/archive"
+    years-for-average: 30
   cache:
     coordinates-ttl: 86400
     forecast-ttl: 3600

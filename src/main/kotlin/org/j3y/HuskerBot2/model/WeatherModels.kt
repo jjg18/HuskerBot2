@@ -40,3 +40,27 @@ data class TomorrowWeatherValues(
     val precipitationProbability: Double? = null,
     val weatherCode: Int? = null
 )
+
+// Open-Meteo Historical API response models
+data class OpenMeteoHistoricalResponse(
+    val latitude: Double,
+    val longitude: Double,
+    val daily: OpenMeteoDailyData? = null
+)
+
+data class OpenMeteoDailyData(
+    val time: List<String>? = null,
+    val temperature_2m_max: List<Double?>? = null,
+    val temperature_2m_min: List<Double?>? = null,
+    val precipitation_sum: List<Double?>? = null,
+    val windspeed_10m_max: List<Double?>? = null
+)
+
+// Historical average result
+data class HistoricalWeatherAverage(
+    val averageHigh: Int,
+    val averageLow: Int,
+    val averagePrecipitation: Double?,
+    val averageWindSpeed: Double?,
+    val yearsOfData: Int
+)
