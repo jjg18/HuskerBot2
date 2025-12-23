@@ -143,6 +143,83 @@ open class GoogleGeminiService(
         return ImageResult.Error("Gemini response did not include image data.")
     }
 
+    /**
+     * Update/transform an input image using a guidance prompt via Gemini Image model.
+     */
+    @Retryable(include = [HttpStatusCodeException::class], maxAttempts = 5, backoff = Backoff(delay = 5000))
+    open fun updateImageWithPrompt(imageBytes: ByteArray, mimeType: String?, prompt: String): ImageResult {
+        if (apiKey.isBlank()) {
+            return ImageResult.Error("Gemini is not configured. Please set gemini.api-key in application.yml or environment.")
+        }
+
+        val uri = UriComponentsBuilder
+            .fromUriString(baseUrl)
+            .path("/v1beta/")
+            .path(imageModel)
+            .path(":generateContent")
+            .queryParam("key", apiKey)
+            .build(true)
+            .toUri()
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+
+        val base64 = java.util.Base64.getEncoder().encodeToString(imageBytes)
+        val mime = mimeType?.ifBlank { null } ?: "image/png"
+
+        val body = mapOf(
+            "contents" to listOf(
+                mapOf(
+                    "role" to "user",
+                    "parts" to listOf(
+                        mapOf(
+                            "inline_data" to mapOf(
+                                "mime_type" to mime,
+                                "data" to base64
+                            )
+                        ),
+                        mapOf("text" to prompt)
+                    )
+                )
+            ),
+            "generationConfig" to mapOf(
+                "responseModalities" to listOf("IMAGE")
+            )
+        )
+
+        val entity = HttpEntity(body, headers)
+        val response = client.exchange(uri, HttpMethod.POST, entity, JsonNode::class.java).body
+
+        val candidate = response?.get("candidates")?.get(0)
+        val parts = candidate?.get("content")?.get("parts")
+        if (parts == null || !parts.isArray || parts.size() == 0) {
+            return ImageResult.Error("No image returned by Gemini.")
+        }
+
+        val iterator = parts.elements()
+        while (iterator.hasNext()) {
+            val part = iterator.next()
+            val inline = part.get("inlineData")
+            if (inline != null) {
+                val data = inline.get("data")?.asText()
+                val outMime = inline.get("mimeType")?.asText() ?: "image/png"
+                if (!data.isNullOrBlank()) {
+                    val bytes = java.util.Base64.getDecoder().decode(data)
+                    return ImageResult.ImageBytes(bytes, outMime)
+                }
+            }
+            val fileData = part.get("file_data")
+            if (fileData != null) {
+                val uriStr = fileData.get("file_uri")?.asText()
+                if (!uriStr.isNullOrBlank()) {
+                    return ImageResult.Error("Gemini returned file uri; downloading not implemented: ${'$'}uriStr")
+                }
+            }
+        }
+
+        return ImageResult.Error("Gemini response did not include image data.")
+    }
+
     @Recover
     fun recoverGenerateText(ex: HttpStatusCodeException, prompt: String): String {
         log.error("Error calling Google Gemini API after retries", ex)
@@ -156,6 +233,18 @@ open class GoogleGeminiService(
         log.error("Error calling Google Gemini Image API after retries", ex)
         val response = mapper.readTree(ex.responseBodyAsString).path("error").path("message").asText()
 
+        return ImageResult.Error("Error calling Gemini: ${response.ifEmpty { ex.message }}")
+    }
+
+    @Recover
+    fun recoverUpdateImage(
+        ex: HttpStatusCodeException,
+        imageBytes: ByteArray,
+        mimeType: String?,
+        prompt: String
+    ): ImageResult {
+        log.error("Error calling Google Gemini Image Update API after retries", ex)
+        val response = mapper.readTree(ex.responseBodyAsString).path("error").path("message").asText()
         return ImageResult.Error("Error calling Gemini: ${response.ifEmpty { ex.message }}")
     }
 }

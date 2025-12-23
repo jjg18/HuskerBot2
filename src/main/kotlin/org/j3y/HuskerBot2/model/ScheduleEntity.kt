@@ -25,5 +25,5 @@ class ScheduleEntity(
     var spread: String = "",
     var overUnder: Double? = null,
     var completed: Boolean? = false,
-    var isDome: Boolean = false,
+    var isDome: Boolean? = false,
 )
