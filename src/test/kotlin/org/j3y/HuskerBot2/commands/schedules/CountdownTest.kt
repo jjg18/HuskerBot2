@@ -65,7 +65,7 @@ class CountdownTest {
         // Prepare a future instant and schedule entity
         val futureInstant = Instant.now().plusSeconds(24 * 60 * 60) // +1 day
         val sched = ScheduleEntity(
-            id = 1,
+            id = 1L,
             opponent = "Opponent",
             dateTime = futureInstant
         )
