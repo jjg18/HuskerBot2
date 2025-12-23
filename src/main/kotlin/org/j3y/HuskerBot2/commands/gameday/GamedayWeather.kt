@@ -121,7 +121,7 @@ class GamedayWeather : SlashCommand() {
         embed.addField("🏠 Home/Away", if (isHomeGame(game)) "Home" else "Away", true)
         
         // Show venue type for dome games
-        if (game.isDome) {
+        if (game.isDome == true) {
             embed.addField("🏟️ Venue", "Dome/Indoor", true)
         }
         
@@ -140,7 +140,7 @@ class GamedayWeather : SlashCommand() {
             }
             
             // Add dome snark or regular snarky description
-            if (game.isDome) {
+            if (game.isDome == true) {
                 embed.addField("🔥 Forecast Hot Take", getDomeSnark(weather), false)
             } else {
                 weather.snarkyDescription?.let {
@@ -153,7 +153,7 @@ class GamedayWeather : SlashCommand() {
             embed.addField("⚠️ Weather", "Weather data unavailable", false)
         }
         
-        val footerText = if (game.isDome) {
+        val footerText = if (game.isDome == true) {
             "Weather outside the dome - inside it's a perfect 72°F"
         } else {
             "Weather data from Tomorrow.io (≤120 hours) or National Weather Service (>120 hours)"

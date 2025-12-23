@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
 import org.j3y.HuskerBot2.service.EspnService
+import org.j3y.HuskerBot2.util.SeasonResolver
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
@@ -189,14 +190,17 @@ class CfbSchedTest {
         `when`(espn.getCfbScoreboard(Mockito.anyInt(), Mockito.anyInt())).thenReturn(apiJson)
         `when`(espn.buildEventEmbed(apiJson)).thenReturn(embeds)
 
-        cmd.execute(event)
+        Mockito.mockStatic(SeasonResolver::class.java).use { mockedResolver ->
+            mockedResolver.`when`<Int> { SeasonResolver.currentCfbWeek() }.thenReturn(3)
 
-        Mockito.verify(replyAction).queue()
-        Mockito.verify(espn).getCfbScoreboard(leagueCaptor.capture(), weekCaptor.capture())
-        assertEquals(0, leagueCaptor.value) // top25 default
-        val weekUsed = weekCaptor.value
-        assertTrue(weekUsed in 1..17)
-        Mockito.verify(msgAction).addEmbeds(embeds)
-        Mockito.verify(msgAction).queue()
+            cmd.execute(event)
+
+            Mockito.verify(replyAction).queue()
+            Mockito.verify(espn).getCfbScoreboard(leagueCaptor.capture(), weekCaptor.capture())
+            assertEquals(0, leagueCaptor.value) // top25 default
+            assertEquals(3, weekCaptor.value)
+            Mockito.verify(msgAction).addEmbeds(embeds)
+            Mockito.verify(msgAction).queue()
+        }
     }
 }
