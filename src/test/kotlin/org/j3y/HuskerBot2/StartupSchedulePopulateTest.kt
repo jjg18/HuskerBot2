@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.j3y.HuskerBot2.model.ScheduleEntity
 import org.j3y.HuskerBot2.repository.ScheduleRepo
+import org.j3y.HuskerBot2.scheduler.SunriseSunsetScheduler
 import org.j3y.HuskerBot2.service.HuskersDotComService
+import org.j3y.HuskerBot2.util.SeasonResolver
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -22,6 +24,7 @@ class StartupSchedulePopulateTest {
 
     private lateinit var scheduleRepo: ScheduleRepo
     private lateinit var huskersDotComService: HuskersDotComService
+    private lateinit var sunriseSunsetScheduler: SunriseSunsetScheduler
     private lateinit var subject: StartupSchedulePopulate
 
     private val mapper = ObjectMapper()
@@ -30,9 +33,9 @@ class StartupSchedulePopulateTest {
     fun setUp() {
         scheduleRepo = Mockito.mock(ScheduleRepo::class.java)
         huskersDotComService = Mockito.mock(HuskersDotComService::class.java)
+        sunriseSunsetScheduler = Mockito.mock(SunriseSunsetScheduler::class.java)
         subject = StartupSchedulePopulate()
 
-        // Inject mocks into the autowired fields
         // Inject mocks into the autowired fields
         // scheduleRepo is private, so use reflection
         val repoField = StartupSchedulePopulate::class.java.getDeclaredField("scheduleRepo")
@@ -42,6 +45,10 @@ class StartupSchedulePopulateTest {
         val huskersField = StartupSchedulePopulate::class.java.getDeclaredField("huskersDotComService")
         huskersField.isAccessible = true
         huskersField.set(subject, huskersDotComService)
+
+        val schedulerField = StartupSchedulePopulate::class.java.getDeclaredField("a")
+        schedulerField.isAccessible = true
+        schedulerField.set(subject, sunriseSunsetScheduler)
     }
 
     private fun buildGame(
@@ -79,9 +86,9 @@ class StartupSchedulePopulateTest {
     inner class InitBehavior {
         @Test
         fun `creates and saves new schedule entities for returned games`() {
-            val year = LocalDate.now().year
-            val dt1 = Instant.parse("$year-09-01T18:00:00Z")
-            val dt2 = Instant.parse("$year-09-08T18:00:00Z")
+            val year = SeasonResolver.currentCfbSeason()
+            val dt1 = Instant.parse("$year-08-31T18:00:00Z")
+            val dt2 = Instant.parse("$year-09-07T18:00:00Z")
 
             val resp = scheduleResponse(
                 buildGame(1, "Lincoln, NE", "Team A", "http://logo/a.png", dt1, true, "home"),
@@ -123,13 +130,13 @@ class StartupSchedulePopulateTest {
             assertEquals("http://logo/b.png", game2.opponentLogo)
             assertEquals(dt2, game2.dateTime)
             assertEquals(year, game2.season)
-            assertEquals(3, game2.week, "Week should be cfb week")
+            assertEquals(2, game2.week, "Week should be cfb week")
         }
 
         @Test
         fun `updates and saves existing entity when found by id`() {
-            val year = LocalDate.now().year
-            val dt = Instant.parse("$year-10-01T18:00:00Z")
+            val year = SeasonResolver.currentCfbSeason()
+            val dt = Instant.parse("$year-09-28T18:00:00Z")
 
             val resp = scheduleResponse(
                 buildGame(100, "Madison, WI", "Badgers", "http://logo/wisc.png", dt, true, "away"),
@@ -163,12 +170,12 @@ class StartupSchedulePopulateTest {
             assertEquals("http://logo/wisc.png", saved.opponentLogo)
             assertEquals(dt, saved.dateTime)
             assertEquals(year, saved.season)
-            assertEquals(6, saved.week)
+            assertEquals(5, saved.week)
         }
 
         @Test
         fun `does nothing when no games returned`() {
-            val year = LocalDate.now().year
+            val year = SeasonResolver.currentCfbSeason()
             val empty = mapper.createObjectNode().apply {
                 set<ArrayNode>("data", mapper.createArrayNode())
             }

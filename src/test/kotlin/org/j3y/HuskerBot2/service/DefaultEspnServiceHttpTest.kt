@@ -2,6 +2,7 @@ package org.j3y.HuskerBot2.service
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.j3y.HuskerBot2.util.SeasonResolver
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
@@ -33,7 +34,7 @@ class DefaultEspnServiceHttpTest {
         assertTrue(uri.contains("groups=$league"))
         assertTrue(uri.contains("limit=300"))
         assertTrue(uri.contains("seasontype=2"))
-        assertTrue(uri.contains("dates=${LocalDate.now().year}"))
+        assertTrue(uri.contains("dates=${SeasonResolver.currentCfbSeason()}"))
     }
 
     @Test
@@ -68,7 +69,7 @@ class DefaultEspnServiceHttpTest {
         assertTrue(uri.contains("week=$week"))
         assertTrue(uri.contains("limit=100"))
         assertTrue(uri.contains("seasontype=2"))
-        assertTrue(uri.contains("dates=${LocalDate.now().year}"))
+        assertTrue(uri.contains("dates=${SeasonResolver.currentNflSeason()}"))
     }
 
     @Test

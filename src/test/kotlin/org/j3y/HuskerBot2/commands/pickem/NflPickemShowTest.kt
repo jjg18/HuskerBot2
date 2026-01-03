@@ -11,6 +11,7 @@ import org.j3y.HuskerBot2.model.NflGameEntity
 import org.j3y.HuskerBot2.model.NflPick
 import org.j3y.HuskerBot2.repository.NflGameRepo
 import org.j3y.HuskerBot2.repository.NflPickRepo
+import org.j3y.HuskerBot2.util.SeasonResolver
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -54,7 +55,7 @@ class NflPickemShowTest {
         NflPick(
             gameId = gameId,
             userId = userId,
-            season = LocalDate.now().year,
+            season = SeasonResolver.currentNflSeason(),
             week = week,
             winningTeamId = winningTeamId,
             processed = processed,
@@ -75,7 +76,7 @@ class NflPickemShowTest {
         awayTeam = away,
         awayTeamId = awayId,
         dateTime = ts,
-        season = LocalDate.now().year,
+        season = SeasonResolver.currentNflSeason(),
         week = 1
     )
 
@@ -85,7 +86,7 @@ class NflPickemShowTest {
         @Suppress("UNCHECKED_CAST")
         val messageAction = Mockito.mock(WebhookMessageCreateAction::class.java) as WebhookMessageCreateAction<Message>
         val week = 3
-        `when`(pickRepo.findByUserIdAndSeasonAndWeek(99L, LocalDate.now().year, week)).thenReturn(emptyList())
+        `when`(pickRepo.findByUserIdAndSeasonAndWeek(99L, SeasonResolver.currentNflSeason(), week)).thenReturn(emptyList())
         // The implementation now always responds with an embed
         `when`(hook.sendMessageEmbeds(Mockito.any(MessageEmbed::class.java))).thenReturn(messageAction)
 
@@ -113,13 +114,13 @@ class NflPickemShowTest {
 
         val p1 = pick(1L, 7L, week, processed = false, correct = false, winningTeamId = 100L)
         val p2 = pick(2L, 7L, week, processed = false, correct = false, winningTeamId = 200L)
-        `when`(pickRepo.findByUserIdAndSeasonAndWeek(7L, LocalDate.now().year, week)).thenReturn(listOf(p2, p1))
+        `when`(pickRepo.findByUserIdAndSeasonAndWeek(7L, SeasonResolver.currentNflSeason(), week)).thenReturn(listOf(p2, p1))
 
         val g1 = game(1L, home = "HomeA", homeId = 101L, away = "AwayA", awayId = 100L)
         val g2 = game(2L, home = "HomeB", homeId = 200L, away = "AwayB", awayId = 201L)
         // Mark at least one game as pending (no winner) so results are not final
         g1.winnerId = null
-        `when`(gameRepo.findBySeasonAndWeekOrderByDateTimeAsc(LocalDate.now().year, week)).thenReturn(listOf(g1, g2))
+        `when`(gameRepo.findBySeasonAndWeekOrderByDateTimeAsc(SeasonResolver.currentNflSeason(), week)).thenReturn(listOf(g1, g2))
 
         cmd.handleEvent(event, week)
 
@@ -155,14 +156,14 @@ class NflPickemShowTest {
 
         val p1 = pick(10L, 5L, week, processed = true, correct = true, winningTeamId = 300L)
         val p2 = pick(20L, 5L, week, processed = true, correct = false, winningTeamId = 400L)
-        `when`(pickRepo.findByUserIdAndSeasonAndWeek(5L, LocalDate.now().year, week)).thenReturn(listOf(p1, p2))
+        `when`(pickRepo.findByUserIdAndSeasonAndWeek(5L, SeasonResolver.currentNflSeason(), week)).thenReturn(listOf(p1, p2))
 
         val g1 = game(10L, home = "H1", homeId = 301L, away = "A1", awayId = 300L)
         val g2 = game(20L, home = "H2", homeId = 400L, away = "A2", awayId = 401L)
         // Keep winnerId non-null for both to indicate final results
         g1.winnerId = 301L
         g2.winnerId = 400L
-        `when`(gameRepo.findBySeasonAndWeekOrderByDateTimeAsc(LocalDate.now().year, week)).thenReturn(listOf(g1, g2))
+        `when`(gameRepo.findBySeasonAndWeekOrderByDateTimeAsc(SeasonResolver.currentNflSeason(), week)).thenReturn(listOf(g1, g2))
 
         cmd.handleEvent(event, week)
 
@@ -194,7 +195,7 @@ class NflPickemShowTest {
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(messageAction)
 
         val p1 = pick(100L, 1L, week, processed = false, correct = false, winningTeamId = 1L)
-        `when`(pickRepo.findByUserIdAndSeasonAndWeek(1L, LocalDate.now().year, week)).thenReturn(listOf(p1))
+        `when`(pickRepo.findByUserIdAndSeasonAndWeek(1L, SeasonResolver.currentNflSeason(), week)).thenReturn(listOf(p1))
         `when`(gameRepo.findById(100L)).thenThrow(RuntimeException("boom"))
 
         cmd.handleEvent(event, week)

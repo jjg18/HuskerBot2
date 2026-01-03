@@ -8,6 +8,7 @@ import org.j3y.HuskerBot2.model.ScheduleEntity
 import org.j3y.HuskerBot2.repository.BetRepo
 import org.j3y.HuskerBot2.repository.ScheduleRepo
 import org.j3y.HuskerBot2.service.CfbBettingLinesService
+import org.j3y.HuskerBot2.util.SeasonResolver
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -106,7 +107,7 @@ class BetProcessingTest {
 
     @Test
     fun `processes bets when Nebraska is home`() {
-        val season = LocalDate.now().year
+        val season = SeasonResolver.currentCfbSeason()
         val week = 7
         val entity = ScheduleEntity(
             id = 3,
@@ -167,7 +168,7 @@ class BetProcessingTest {
 
     @Test
     fun `processes bets when Nebraska is away`() {
-        val season = LocalDate.now().year
+        val season = SeasonResolver.currentCfbSeason()
         val week = 8
         val entity = ScheduleEntity(
             id = 4,
