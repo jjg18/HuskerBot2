@@ -76,7 +76,7 @@ class CfbSchedTest {
     }
 
     @Test
-    fun `invalid week below range sends error`() {
+    fun `invalid week below range defaults to bowls`() {
         val cmd = CfbSched()
         val espn = Mockito.mock(EspnService::class.java)
         cmd.espnService = espn
@@ -85,24 +85,25 @@ class CfbSchedTest {
         @Suppress("UNCHECKED_CAST")
         val msgAction = Mockito.mock(WebhookMessageCreateAction::class.java) as WebhookMessageCreateAction<Message>
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(msgAction)
+        `when`(msgAction.addEmbeds(Mockito.anyList<MessageEmbed>())).thenReturn(msgAction)
 
         val weekOpt = Mockito.mock(net.dv8tion.jda.api.interactions.commands.OptionMapping::class.java)
         `when`(weekOpt.asInt).thenReturn(0) // invalid
         `when`(event.getOption("week")).thenReturn(weekOpt)
         // no league provided -> default top25 = valid
 
+        val apiJson = Mockito.mock(JsonNode::class.java)
+        `when`(espn.getCfbScoreboard(0, -1)).thenReturn(apiJson)
+        `when`(espn.buildEventEmbed(apiJson)).thenReturn(listOf(Mockito.mock(MessageEmbed::class.java)))
+
         cmd.execute(event)
 
         Mockito.verify(replyAction).queue()
-        val captor = ArgumentCaptor.forClass(String::class.java)
-        Mockito.verify(hook).sendMessage(captor.capture())
-        assertEquals("Week must be between 1 and 17 inclusive.", captor.value)
-        Mockito.verify(msgAction).queue()
-        Mockito.verifyNoInteractions(espn)
+        Mockito.verify(espn).getCfbScoreboard(0, -1)
     }
 
     @Test
-    fun `invalid week above range sends error`() {
+    fun `invalid week above range defaults to bowls`() {
         val cmd = CfbSched()
         val espn = Mockito.mock(EspnService::class.java)
         cmd.espnService = espn
@@ -111,19 +112,20 @@ class CfbSchedTest {
         @Suppress("UNCHECKED_CAST")
         val msgAction = Mockito.mock(WebhookMessageCreateAction::class.java) as WebhookMessageCreateAction<Message>
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(msgAction)
+        `when`(msgAction.addEmbeds(Mockito.anyList<MessageEmbed>())).thenReturn(msgAction)
 
         val weekOpt = Mockito.mock(net.dv8tion.jda.api.interactions.commands.OptionMapping::class.java)
         `when`(weekOpt.asInt).thenReturn(99) // invalid
         `when`(event.getOption("week")).thenReturn(weekOpt)
 
+        val apiJson = Mockito.mock(JsonNode::class.java)
+        `when`(espn.getCfbScoreboard(0, -1)).thenReturn(apiJson)
+        `when`(espn.buildEventEmbed(apiJson)).thenReturn(listOf(Mockito.mock(MessageEmbed::class.java)))
+
         cmd.execute(event)
 
         Mockito.verify(replyAction).queue()
-        val captor = ArgumentCaptor.forClass(String::class.java)
-        Mockito.verify(hook).sendMessage(captor.capture())
-        assertEquals("Week must be between 1 and 17 inclusive.", captor.value)
-        Mockito.verify(msgAction).queue()
-        Mockito.verifyNoInteractions(espn)
+        Mockito.verify(espn).getCfbScoreboard(0, -1)
     }
 
     @Test
@@ -163,7 +165,7 @@ class CfbSchedTest {
         val msgCaptor = ArgumentCaptor.forClass(String::class.java)
         Mockito.verify(hook).sendMessage(msgCaptor.capture())
         val heading = msgCaptor.value
-        assertTrue(heading.contains("CFB Schedule for Big 10 in Week 3"))
+        assertTrue(heading.contains("CFB Schedule  for Big 10 in Week 3"))
         Mockito.verify(msgAction).addEmbeds(embeds)
         Mockito.verify(msgAction).queue()
     }

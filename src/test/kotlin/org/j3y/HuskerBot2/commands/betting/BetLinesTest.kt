@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.interactions.InteractionHook
 import org.j3y.HuskerBot2.model.ScheduleEntity
 import org.j3y.HuskerBot2.repository.ScheduleRepo
 import org.j3y.HuskerBot2.service.CfbBettingLinesService
+import org.j3y.HuskerBot2.util.SeasonResolver
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -42,7 +43,7 @@ class BetLinesTest {
 
     @Test
     fun `getOptions builds expected week choices`() {
-        val season = LocalDate.now().year
+        val season = SeasonResolver.currentCfbSeason()
         val games = listOf(
             ScheduleEntity(id = 1, opponent = "Iowa", season = season, week = 3),
             ScheduleEntity(id = 2, opponent = "Minnesota", season = season, week = 5)
@@ -64,7 +65,7 @@ class BetLinesTest {
 
     @Test
     fun `execute sends embed with odds when Nebraska game found`() {
-        val season = LocalDate.now().year
+        val season = SeasonResolver.currentCfbSeason()
         val event = Mockito.mock(SlashCommandInteractionEvent::class.java)
         val replyAction = Mockito.mock(ReplyCallbackAction::class.java)
         val hook = Mockito.mock(InteractionHook::class.java)
@@ -118,7 +119,7 @@ class BetLinesTest {
 
     @Test
     fun `execute replies with message when Nebraska game not found in ESPN data`() {
-        val season = LocalDate.now().year
+        val season = SeasonResolver.currentCfbSeason()
         val week = 2
         val event = Mockito.mock(SlashCommandInteractionEvent::class.java)
         val replyAction = Mockito.mock(ReplyCallbackAction::class.java)

@@ -24,7 +24,7 @@ class NflPickemReload : SlashCommand() {
     override fun getOptions(): List<OptionData> {
         val weekChoices: MutableList<Command.Choice> = mutableListOf()
 
-        for (w in 1..SeasonResolver.currentNflWeek() + 1) {
+        for (w in 1..19) {
             weekChoices.add(Command.Choice("Week $w", w.toLong()))
         }
 

@@ -19,6 +19,7 @@ import org.j3y.HuskerBot2.repository.NflGameRepo
 import org.j3y.HuskerBot2.repository.NflPickRepo
 import org.j3y.HuskerBot2.service.EspnService
 import org.j3y.HuskerBot2.service.NflPickemLeaderboardService
+import org.j3y.HuskerBot2.util.SeasonResolver
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -74,7 +75,7 @@ class NflPickemProcessingTest {
         val events = mapper.createArrayNode()
         root.set<ArrayNode>("events", events)
         val season = mapper.createObjectNode()
-        season.put("year", LocalDate.now().year)
+        season.put("year", SeasonResolver.currentNflSeason())
         root.set<ObjectNode>("season", season)
 
         val event = mapper.createObjectNode()
@@ -145,10 +146,14 @@ class NflPickemProcessingTest {
         val guild = Mockito.mock(Guild::class.java)
         val role = Mockito.mock(Role::class.java)
         val override = Mockito.mock(net.dv8tion.jda.api.entities.PermissionOverride::class.java)
+        val history = Mockito.mock(net.dv8tion.jda.api.entities.MessageHistory::class.java)
 
-        // First call for deleteAllPosts returns null; next calls return the channel
-                `when`(jda.getTextChannelById(id)).thenReturn(null, channel)
+        // First call for deleteAllPosts returns the channel; next calls also return the channel
+        `when`(jda.getTextChannelById(id)).thenReturn(channel)
         `when`(channel.id).thenReturn(id)
+        `when`(channel.history).thenReturn(history)
+        `when`(history.retrievePast(Mockito.anyInt())).thenReturn(Mockito.mock(net.dv8tion.jda.api.requests.RestAction::class.java) as net.dv8tion.jda.api.requests.RestAction<List<net.dv8tion.jda.api.entities.Message>>)
+        `when`(history.retrievePast(Mockito.anyInt()).complete()).thenReturn(emptyList())
         // read-only already ensured by existing override
         `when`(channel.guild).thenReturn(guild)
         `when`(guild.publicRole).thenReturn(role)
@@ -187,13 +192,14 @@ class NflPickemProcessingTest {
 
         // Picks for this game: 2 picks DAL, 1 pick SF
         val picks = listOf(
-            NflPick(gameId = 2002L, userId = 1, season = LocalDate.now().year, week = 2, winningTeamId = 77L),
-            NflPick(gameId = 2002L, userId = 2, season = LocalDate.now().year, week = 2, winningTeamId = 77L),
-            NflPick(gameId = 2002L, userId = 3, season = LocalDate.now().year, week = 2, winningTeamId = 99L)
+            NflPick(gameId = 2002L, userId = 1, season = SeasonResolver.currentNflSeason(), week = 2, winningTeamId = 77L),
+            NflPick(gameId = 2002L, userId = 2, season = SeasonResolver.currentNflSeason(), week = 2, winningTeamId = 77L),
+            NflPick(gameId = 2002L, userId = 3, season = SeasonResolver.currentNflSeason(), week = 2, winningTeamId = 99L)
         )
         `when`(pickRepo.findByGameId(2002L)).thenReturn(picks)
 
         val ch = mockChannelWithPermissions("chan")
+        `when`(ch.msgAction.addActionRow(Mockito.any(net.dv8tion.jda.api.interactions.components.ItemComponent::class.java))).thenReturn(ch.msgAction)
 
         // Capture the per-game embed and action row buttons
         val embedCaptor = ArgumentCaptor.forClass(MessageEmbed::class.java)
@@ -214,7 +220,7 @@ class NflPickemProcessingTest {
         assertEquals(99L, saved.homeTeamId)
         assertEquals("DAL", saved.awayTeam)
         assertEquals(77L, saved.awayTeamId)
-        assertEquals(LocalDate.now().year, saved.season)
+        assertEquals(SeasonResolver.currentNflSeason(), saved.season)
         assertTrue(saved.week > 0)
         assertNotNull(saved.dateTime)
 
@@ -262,12 +268,13 @@ class NflPickemProcessingTest {
 
         val msgCaptor = ArgumentCaptor.forClass(String::class.java)
         `when`(ch.channel.sendMessage(msgCaptor.capture())).thenReturn(ch.msgAction)
-        
+        `when`(ch.msgAction.addActionRow(Mockito.any(net.dv8tion.jda.api.interactions.components.ItemComponent::class.java))).thenReturn(ch.msgAction)
+
         processing.postWeeklyPickem(2)
 
         // Among messages, we should have the season no-picks notice
         val allMsgs = msgCaptor.allValues.joinToString("\n")
-        assertTrue(allMsgs.contains("No season picks recorded yet for ${LocalDate.now().year}."))
+        assertTrue(allMsgs.contains("No season picks recorded yet for ${SeasonResolver.currentNflSeason()}."))
     }
     
     @Test
@@ -323,7 +330,7 @@ class NflPickemProcessingTest {
         `when`(msgAction.queue()).then { null }
         `when`(ch.sendMessage(Mockito.anyString())).thenReturn(msgAction)
 
-        val season = LocalDate.now().year
+        val season = SeasonResolver.currentNflSeason()
         val allPicks = listOf(
             NflPick(gameId = 1, userId = 1, season = season, week = 1, winningTeamId = 2, correctPick = true, processed = true),
             NflPick(gameId = 2, userId = 1, season = season, week = 1, winningTeamId = 3, correctPick = false, processed = true),
@@ -338,6 +345,8 @@ class NflPickemProcessingTest {
         root.set<ArrayNode>("events", mapper.createArrayNode())
         `when`(espn.getNflScoreboard(Mockito.anyInt())).thenReturn(root)
         
+        `when`(msgAction.addActionRow(Mockito.any(net.dv8tion.jda.api.interactions.components.ItemComponent::class.java))).thenReturn(msgAction)
+
         processing.postWeeklyPickem(2)
 
         val embed = embedCaptor.allValues.firstOrNull { it.title?.contains("Season Leaderboard") == true }
@@ -345,6 +354,46 @@ class NflPickemProcessingTest {
         val body = embed!!.fields.firstOrNull { it.name == "Leaderboard" }?.value ?: ""
         assertTrue(body.contains("🥇 <@2> — 20 pts (2/2 correct)"))
         assertTrue(body.contains("🥈 <@1> — 10 pts (1/2 correct)"))
+    }
+
+    @Test
+    fun `postWeeklyPickem with week 19 congratulates winner and returns early`() {
+        val ch = mockChannelWithPermissions("chan").channel
+        val msgAction = Mockito.mock(MessageCreateAction::class.java)
+        val embedCaptor = ArgumentCaptor.forClass(MessageEmbed::class.java)
+        val msgCaptor = ArgumentCaptor.forClass(String::class.java)
+
+        `when`(ch.sendMessageEmbeds(embedCaptor.capture())).thenReturn(msgAction)
+        `when`(ch.sendMessage(msgCaptor.capture())).thenReturn(msgAction)
+        `when`(msgAction.queue()).then { null }
+
+        val season = SeasonResolver.currentNflSeason()
+        val allPicks = listOf(
+            NflPick(gameId = 1, userId = 123, season = season, week = 18, winningTeamId = 1, correctPick = true, processed = true),
+            NflPick(gameId = 2, userId = 456, season = season, week = 18, winningTeamId = 2, correctPick = false, processed = true)
+        )
+        `when`(pickRepo.findBySeasonAndWeek(season, 18)).thenReturn(allPicks)
+        `when`(pickRepo.findAll()).thenReturn(allPicks)
+
+        // For week 19, it should still process prev week (18) and post results
+        val scoreboard18 = mapper.createObjectNode()
+        scoreboard18.set<ArrayNode>("events", mapper.createArrayNode())
+        `when`(espn.getNflScoreboard(18)).thenReturn(scoreboard18)
+
+        processing.postWeeklyPickem(19)
+
+        // Verify winner message
+        val allMsgs = msgCaptor.allValues
+        assertTrue(allMsgs.any { it.contains("Congratulations to our NFL Pick'em season winner, <@123>!") })
+        assertTrue(allMsgs.any { it.contains("That concludes the NFL regular season pick'em.") })
+
+        // Verify leaderboard was posted
+        val allEmbeds = embedCaptor.allValues
+        assertTrue(allEmbeds.any { it.title?.contains("Season Leaderboard") == true })
+        assertTrue(allEmbeds.any { it.title?.contains("Week 18 Results") == true })
+
+        // Verify it didn't call getNflScoreboard(19)
+        Mockito.verify(espn, Mockito.never()).getNflScoreboard(19)
     }
 
 

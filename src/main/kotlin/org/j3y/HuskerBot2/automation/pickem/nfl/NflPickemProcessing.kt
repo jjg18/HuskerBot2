@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.UserSnowflake
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import org.j3y.HuskerBot2.model.NflGameEntity
@@ -42,7 +43,6 @@ class NflPickemProcessing {
         deleteAllPosts()
 
         log.info("Posting NFL Pick'em for week {}", week)
-        val data = espnService.getNflScoreboard(week)
 
         val channel: TextChannel? = jda.getTextChannelById(pickemChannelId)
         if (channel == null) {
@@ -64,6 +64,24 @@ class NflPickemProcessing {
         } catch (e: Exception) {
             log.error("Failed to post previous week results or leaderboard", e)
         }
+
+        if (week >= 19) {
+            val season = SeasonResolver.currentNflSeason()
+            val seasonPicks = try { nflPickRepo.findAll() } catch (e: Exception) { emptyList() }
+                .filter { it.season == season }
+            val ranking = leaderboardService.computeEntries(seasonPicks)
+            if (ranking.isNotEmpty()) {
+                val winner = ranking.first()
+                val winnerName = try {
+                    channel.guild.retrieveMember(UserSnowflake.fromId(winner.userId)).complete()?.asMention
+                } catch (_: Exception) { null } ?: "<@${winner.userId}>"
+                channel.sendMessage("### \uD83C\uDFC6 Congratulations to our NFL Pick'em season winner, $winnerName! \uD83C\uDFC6\n" +
+                        "That concludes the NFL regular season pick'em. Thanks for playing!").queue()
+            }
+            return
+        }
+
+        val data = espnService.getNflScoreboard(week)
 
         try {
             val season = data.path("season").path("year").asInt()

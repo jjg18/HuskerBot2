@@ -8,6 +8,8 @@ import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
 import org.j3y.HuskerBot2.model.NflPick
 import org.j3y.HuskerBot2.repository.NflPickRepo
+import org.j3y.HuskerBot2.service.NflPickemLeaderboardService
+import org.j3y.HuskerBot2.util.SeasonResolver
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -27,11 +29,12 @@ class NflPickemLeaderboardTest {
         cmd = NflPickemLeaderboard()
         pickRepo = Mockito.mock(NflPickRepo::class.java)
         cmd.nflPickRepo = pickRepo
+        cmd.leaderboardService = NflPickemLeaderboardService()
     }
 
     @Test
     fun `execute replies with no picks message when none found for current season`() {
-        val season = LocalDate.now().year
+        val season = SeasonResolver.currentNflSeason()
         val event = Mockito.mock(SlashCommandInteractionEvent::class.java)
         val replyAction = Mockito.mock(ReplyCallbackAction::class.java)
         val hook = Mockito.mock(InteractionHook::class.java)
@@ -57,7 +60,7 @@ class NflPickemLeaderboardTest {
 
     @Test
     fun `execute builds and sends sorted leaderboard with ties resolved by userId`() {
-        val season = LocalDate.now().year
+        val season = SeasonResolver.currentNflSeason()
         val event = Mockito.mock(SlashCommandInteractionEvent::class.java)
         val replyAction = Mockito.mock(ReplyCallbackAction::class.java)
         val hook = Mockito.mock(InteractionHook::class.java)
@@ -107,6 +110,7 @@ class NflPickemLeaderboardTest {
         val lines = fieldValue.split("\n").filter { it.isNotBlank() }
         assertEquals(3, lines.size)
         // Check ordering and formatting with medals and totals
+        // userId tie-breaker (1 < 3)
         assertEquals("🥇 <@1> — 50 pts (5/7 correct)", lines[0])
         assertEquals("🥇 <@3> — 50 pts (5/5 correct)", lines[1])
         assertEquals("🥉 <@2> — 30 pts (3/4 correct)", lines[2])
@@ -114,7 +118,7 @@ class NflPickemLeaderboardTest {
 
     @Test
     fun `execute says no picks when only incorrect picks exist`() {
-        val season = LocalDate.now().year
+        val season = SeasonResolver.currentNflSeason()
         val event = Mockito.mock(SlashCommandInteractionEvent::class.java)
         val replyAction = Mockito.mock(ReplyCallbackAction::class.java)
         val hook = Mockito.mock(InteractionHook::class.java)

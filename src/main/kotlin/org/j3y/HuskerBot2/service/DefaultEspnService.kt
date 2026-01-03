@@ -35,12 +35,32 @@ class DefaultEspnService(
     @Cacheable("cfbScoreboards")
     override fun getCfbScoreboard(league: Int, week: Int): JsonNode {
         log.info("Updating CFB ESPN Cache.")
+
+        var league = league
+        var week = week
+        var seasonType = 2
+
+        // Bowls (week = -1)
+        if (week == -1) {
+            seasonType = 3
+            league = 0
+
+        // CFP (week = -2)
+        } else if (week == -2) {
+            seasonType = 3
+            league = 0
+            week = 999
+        }
+
         val espnUriBuilder =
             UriComponentsBuilder.fromUriString(
                 "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard" +
-                    "?lang=en&region=us&calendartype=blacklist&limit=300&dates=${YEAR_CFB}&seasontype=2"
+                    "?lang=en&region=us&calendartype=blacklist&limit=300&dates=${YEAR_CFB}&seasontype=${seasonType}"
             )
-                .queryParam("week", week)
+
+        if (week > 0) {
+            espnUriBuilder.queryParam("week", week)
+        }
 
         if (league != 0) {
             espnUriBuilder.queryParam("groups", league)
