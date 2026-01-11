@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
+import net.dv8tion.jda.api.utils.FileUpload
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
@@ -53,7 +54,8 @@ class OsrsStatsTest {
             "21,99,13034431", // Farming
             "22,99,13034431", // Runecrafting
             "23,99,13034431", // Hunter
-            "24,99,13034431"  // Construction
+            "24,99,13034431", // Construction
+            "25,99,13034431"  // Sailing
         )
         // Join with newlines and an extra newline at the end to emulate real response
         return lines.joinToString("\n", postfix = "\n")
@@ -103,7 +105,7 @@ class OsrsStatsTest {
     }
 
     @Test
-    fun `execute formats skills table and sends message`() {
+    fun `execute generates image and sends file`() {
         val cmd = OsrsStats()
         val event = Mockito.mock(SlashCommandInteractionEvent::class.java)
         val replyAction = Mockito.mock(ReplyCallbackAction::class.java)
@@ -117,7 +119,7 @@ class OsrsStatsTest {
         `when`(event.deferReply()).thenReturn(replyAction)
         `when`(event.hook).thenReturn(hook)
         `when`(event.getOption("player")).thenReturn(opt)
-        `when`(hook.sendMessage(Mockito.anyString())).thenReturn(messageAction)
+        `when`(hook.sendFiles(Mockito.any(FileUpload::class.java))).thenReturn(messageAction)
 
         val rt = Mockito.mock(RestTemplate::class.java)
         `when`(rt.getForObject(Mockito.any(URI::class.java), Mockito.eq(String::class.java))).thenReturn(sampleHiscoreLines())
@@ -126,19 +128,12 @@ class OsrsStatsTest {
         cmd.execute(event)
 
         Mockito.verify(replyAction).queue()
-        val msgCaptor = ArgumentCaptor.forClass(String::class.java)
-        Mockito.verify(hook).sendMessage(msgCaptor.capture())
+        val fileCaptor = ArgumentCaptor.forClass(FileUpload::class.java)
+        Mockito.verify(hook).sendFiles(fileCaptor.capture())
         Mockito.verify(messageAction).queue()
 
-        val msg = msgCaptor.value
-        assertTrue(msg.startsWith("## ⚔\uFE0F OSRS High Scores for MyPlayer"))
-        assertTrue(msg.contains("```prolog"))
-        // Check a couple of specific lines formatted with commas and alignment
-        assertTrue(msg.contains("Overall"))
-        // XP 200000000 should be formatted with commas
-        assertTrue(msg.contains("200,000,000"))
-        // Ensure it ends the code block
-        assertTrue(msg.trim().endsWith("```"))
+        val file = fileCaptor.value
+        assertEquals("osrs_stats.png", file.name)
     }
 
     @Test
@@ -156,7 +151,7 @@ class OsrsStatsTest {
         `when`(event.deferReply()).thenReturn(replyAction)
         `when`(event.hook).thenReturn(hook)
         `when`(event.getOption("player")).thenReturn(opt)
-        `when`(hook.sendMessage(Mockito.anyString())).thenReturn(messageAction)
+        `when`(hook.sendFiles(Mockito.any(FileUpload::class.java))).thenReturn(messageAction)
 
         val rt = Mockito.mock(RestTemplate::class.java)
         val partial = listOf(
@@ -168,13 +163,9 @@ class OsrsStatsTest {
 
         cmd.execute(event)
 
-        val msgCaptor = ArgumentCaptor.forClass(String::class.java)
-        Mockito.verify(hook).sendMessage(msgCaptor.capture())
-        val msg = msgCaptor.value
-        // Should contain two lines for Overall and Attack and still be a codeblock
-        assertTrue(msg.contains("Overall"))
-        assertTrue(msg.contains("Attack"))
-        assertTrue(msg.contains("```prolog"))
-        assertTrue(msg.trim().endsWith("```"))
+        val fileCaptor = ArgumentCaptor.forClass(FileUpload::class.java)
+        Mockito.verify(hook).sendFiles(fileCaptor.capture())
+        val file = fileCaptor.value
+        assertEquals("osrs_stats.png", file.name)
     }
 }
