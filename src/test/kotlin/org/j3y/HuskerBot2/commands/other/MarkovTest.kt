@@ -104,8 +104,8 @@ class MarkovTest {
 
         val user = Mockito.mock(User::class.java)
         `when`(user.asTag).thenReturn("tester#0001")
+        `when`(user.effectiveName).thenReturn("tester")
         `when`(event.user).thenReturn(user)
-
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(msgAction)
 
         cmd.execute(event)
@@ -145,8 +145,8 @@ class MarkovTest {
 
         val user = Mockito.mock(User::class.java)
         `when`(user.asTag).thenReturn("tester#0001")
+        `when`(user.effectiveName).thenReturn("tester")
         `when`(event.user).thenReturn(user)
-
         // Options: order=2, messages=50, seed="Markov"
         val optOrder = Mockito.mock(net.dv8tion.jda.api.interactions.commands.OptionMapping::class.java)
         val optMsgs = Mockito.mock(net.dv8tion.jda.api.interactions.commands.OptionMapping::class.java)
@@ -203,6 +203,7 @@ class MarkovTest {
 
         val user = Mockito.mock(User::class.java)
         `when`(user.asTag).thenReturn("tester#0001")
+        `when`(user.effectiveName).thenReturn("tester")
         `when`(event.user).thenReturn(user)
 
         `when`(hook.sendMessageEmbeds(Mockito.any(MessageEmbed::class.java))).thenReturn(embedAction)
@@ -240,8 +241,8 @@ class MarkovTest {
 
         val user = Mockito.mock(User::class.java)
         `when`(user.asTag).thenReturn("tester#0001")
+        `when`(user.effectiveName).thenReturn("tester")
         `when`(event.user).thenReturn(user)
-
         // order too high
         val optOrderHigh = Mockito.mock(net.dv8tion.jda.api.interactions.commands.OptionMapping::class.java)
         `when`(optOrderHigh.asLong).thenReturn(10L)

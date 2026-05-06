@@ -80,8 +80,8 @@ class UrbanDictionaryServiceTest {
         assertEquals(term, second.word) // fallback to input term when word missing
         assertEquals("Missing word falls back to term", second.definition)
         assertEquals("", second.example) // example cleaned but empty preserved
-        assertEquals("null", second.author)
-        assertEquals("null", second.permalink)
+        assertNull(second.author)
+        assertNull(second.permalink)
 
         // Verify request composed correctly (URL, method, headers)
         val uriCaptor = ArgumentCaptor.forClass(URI::class.java)

@@ -93,7 +93,7 @@ class VbSchedTest {
         result1.put("result", "")
         result1.put("nebraska_score", "")
         result1.put("opponent_score", "")
-        game1.set<ObjectNode>("schedule_event_result", result1)
+        game1.set("schedule_event_result", result1)
         
         val linksArray = factory.arrayNode()
         val tvLink = factory.objectNode()
@@ -101,12 +101,12 @@ class VbSchedTest {
         icon.put("name", "tv-espn.png")
         icon.put("title", "ESPN")
         icon.put("alt", "Watch on ESPN")
-        tvLink.set<ObjectNode>("icon", icon)
+        tvLink.set("icon", icon)
         linksArray.add(tvLink)
-        game1.set<ArrayNode>("schedule_event_links", linksArray)
+        game1.set("schedule_event_links", linksArray)
         
         dataArray.add(game1)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -172,7 +172,7 @@ class VbSchedTest {
         result1.put("result", "")
         result1.put("nebraska_score", "")
         result1.put("opponent_score", "")
-        game1.set<ObjectNode>("schedule_event_result", result1)
+        game1.set("schedule_event_result", result1)
         
         val linksArray = factory.arrayNode()
         val tvLink = factory.objectNode()
@@ -180,12 +180,12 @@ class VbSchedTest {
         icon.put("name", "tv-generic.png")
         icon.put("title", "ESPN")
         icon.put("alt", "Watch on ESPN")
-        tvLink.set<ObjectNode>("icon", icon)
+        tvLink.set("icon", icon)
         linksArray.add(tvLink)
-        game1.set<ArrayNode>("schedule_event_links", linksArray)
+        game1.set("schedule_event_links", linksArray)
         
         dataArray.add(game1)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -226,7 +226,7 @@ class VbSchedTest {
         result1.put("result", "")
         result1.put("nebraska_score", "")
         result1.put("opponent_score", "")
-        game1.set<ObjectNode>("schedule_event_result", result1)
+        game1.set("schedule_event_result", result1)
         
         val linksArray = factory.arrayNode()
         val tvLink = factory.objectNode()
@@ -234,12 +234,12 @@ class VbSchedTest {
         icon.put("name", "tv-generic.png")
         icon.put("title", "FOX Sports 1")
         icon.put("alt", "Watch on FS1")
-        tvLink.set<ObjectNode>("icon", icon)
+        tvLink.set("icon", icon)
         linksArray.add(tvLink)
-        game1.set<ArrayNode>("schedule_event_links", linksArray)
+        game1.set("schedule_event_links", linksArray)
         
         dataArray.add(game1)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -280,7 +280,7 @@ class VbSchedTest {
         result1.put("result", "")
         result1.put("nebraska_score", "")
         result1.put("opponent_score", "")
-        game1.set<ObjectNode>("schedule_event_result", result1)
+        game1.set("schedule_event_result", result1)
         
         val linksArray = factory.arrayNode()
         val tvLink = factory.objectNode()
@@ -288,12 +288,12 @@ class VbSchedTest {
         icon.put("name", "tv-streaming.png")
         icon.put("title", "B1G+")
         icon.put("alt", "Big Ten Plus")
-        tvLink.set<ObjectNode>("icon", icon)
+        tvLink.set("icon", icon)
         linksArray.add(tvLink)
-        game1.set<ArrayNode>("schedule_event_links", linksArray)
+        game1.set("schedule_event_links", linksArray)
         
         dataArray.add(game1)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -334,7 +334,7 @@ class VbSchedTest {
         result1.put("result", "")
         result1.put("nebraska_score", "")
         result1.put("opponent_score", "")
-        game1.set<ObjectNode>("schedule_event_result", result1)
+        game1.set("schedule_event_result", result1)
         
         val linksArray = factory.arrayNode()
         val tvLink = factory.objectNode()
@@ -342,12 +342,12 @@ class VbSchedTest {
         icon.put("name", "tv-local.png")
         icon.put("title", "NPM")
         icon.put("alt", "Nebraska Public Media")
-        tvLink.set<ObjectNode>("icon", icon)
+        tvLink.set("icon", icon)
         linksArray.add(tvLink)
-        game1.set<ArrayNode>("schedule_event_links", linksArray)
+        game1.set("schedule_event_links", linksArray)
         
         dataArray.add(game1)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -388,7 +388,7 @@ class VbSchedTest {
         result1.put("result", "")
         result1.put("nebraska_score", "")
         result1.put("opponent_score", "")
-        game1.set<ObjectNode>("schedule_event_result", result1)
+        game1.set("schedule_event_result", result1)
         
         val linksArray = factory.arrayNode()
         val tvLink = factory.objectNode()
@@ -396,12 +396,12 @@ class VbSchedTest {
         icon.put("name", "tv-npm.svg")
         icon.put("title", "")
         icon.put("alt", "")
-        tvLink.set<ObjectNode>("icon", icon)
+        tvLink.set("icon", icon)
         linksArray.add(tvLink)
-        game1.set<ArrayNode>("schedule_event_links", linksArray)
+        game1.set("schedule_event_links", linksArray)
         
         dataArray.add(game1)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -442,7 +442,7 @@ class VbSchedTest {
         result1.put("result", "")
         result1.put("nebraska_score", "")
         result1.put("opponent_score", "")
-        game1.set<ObjectNode>("schedule_event_result", result1)
+        game1.set("schedule_event_result", result1)
         
         val linksArray = factory.arrayNode()
         val tvLink = factory.objectNode()
@@ -450,12 +450,12 @@ class VbSchedTest {
         icon.put("name", "tv-btn.png")
         icon.put("title", "BTN")
         icon.put("alt", "Big Ten Network")
-        tvLink.set<ObjectNode>("icon", icon)
+        tvLink.set("icon", icon)
         linksArray.add(tvLink)
-        game1.set<ArrayNode>("schedule_event_links", linksArray)
+        game1.set("schedule_event_links", linksArray)
         
         dataArray.add(game1)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -496,7 +496,7 @@ class VbSchedTest {
         result1.put("result", "")
         result1.put("nebraska_score", "")
         result1.put("opponent_score", "")
-        game1.set<ObjectNode>("schedule_event_result", result1)
+        game1.set("schedule_event_result", result1)
         
         val linksArray = factory.arrayNode()
         val tvLink = factory.objectNode()
@@ -504,12 +504,12 @@ class VbSchedTest {
         icon.put("name", "tv-generic.png")
         icon.put("title", "")
         icon.put("alt", "Big Ten Network")
-        tvLink.set<ObjectNode>("icon", icon)
+        tvLink.set("icon", icon)
         linksArray.add(tvLink)
-        game1.set<ArrayNode>("schedule_event_links", linksArray)
+        game1.set("schedule_event_links", linksArray)
         
         dataArray.add(game1)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -550,7 +550,7 @@ class VbSchedTest {
         result1.put("result", "")
         result1.put("nebraska_score", "")
         result1.put("opponent_score", "")
-        game1.set<ObjectNode>("schedule_event_result", result1)
+        game1.set("schedule_event_result", result1)
         
         val linksArray = factory.arrayNode()
         val tvLink = factory.objectNode()
@@ -558,12 +558,12 @@ class VbSchedTest {
         icon.put("name", "tv-streaming.png")
         icon.put("title", "")
         icon.put("alt", "Big Ten Plus")
-        tvLink.set<ObjectNode>("icon", icon)
+        tvLink.set("icon", icon)
         linksArray.add(tvLink)
-        game1.set<ArrayNode>("schedule_event_links", linksArray)
+        game1.set("schedule_event_links", linksArray)
         
         dataArray.add(game1)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -600,16 +600,16 @@ class VbSchedTest {
         nebraskaGame.put("location", "Lincoln, Neb.")
         nebraskaGame.put("datetime", "2025-08-24T19:30:00.000000Z")
         nebraskaGame.put("status", "as_scheduled")
-        nebraskaGame.set<ObjectNode>("second_opponent_id", factory.nullNode()) // Null indicates Nebraska game
+        nebraskaGame.set("second_opponent_id", factory.nullNode()) // Null indicates Nebraska game
         
         val nebraskaResult = factory.objectNode()
         nebraskaResult.put("result", "")
         nebraskaResult.put("nebraska_score", "")
         nebraskaResult.put("opponent_score", "")
-        nebraskaGame.set<ObjectNode>("schedule_event_result", nebraskaResult)
+        nebraskaGame.set("schedule_event_result", nebraskaResult)
         
         val nebraskaLinksArray = factory.arrayNode()
-        nebraskaGame.set<ArrayNode>("schedule_event_links", nebraskaLinksArray)
+        nebraskaGame.set("schedule_event_links", nebraskaLinksArray)
         
         // Non-Nebraska tournament game (should be filtered out)
         val nonNebraskaGame = factory.objectNode()
@@ -624,14 +624,14 @@ class VbSchedTest {
         nonNebraskaResult.put("result", "")
         nonNebraskaResult.put("nebraska_score", "") // No Nebraska score
         nonNebraskaResult.put("opponent_score", "") // No opponent score
-        nonNebraskaGame.set<ObjectNode>("schedule_event_result", nonNebraskaResult)
+        nonNebraskaGame.set("schedule_event_result", nonNebraskaResult)
         
         val nonNebraskaLinksArray = factory.arrayNode()
-        nonNebraskaGame.set<ArrayNode>("schedule_event_links", nonNebraskaLinksArray)
+        nonNebraskaGame.set("schedule_event_links", nonNebraskaLinksArray)
         
         dataArray.add(nebraskaGame)
         dataArray.add(nonNebraskaGame)
-        apiJson.set<ArrayNode>("data", dataArray)
+        apiJson.set("data", dataArray)
 
         `when`(service.getScheduleById(1363)).thenReturn(apiJson)
 
@@ -660,11 +660,11 @@ class VbSchedTest {
         val nebraskaGame = factory.objectNode()
         nebraskaGame.put("opponent_name", "Stanford")
         nebraskaGame.put("venue_type", "home")
-        nebraskaGame.set<ObjectNode>("second_opponent_id", factory.nullNode())
+        nebraskaGame.set("second_opponent_id", factory.nullNode())
         val nebraskaResult = factory.objectNode()
         nebraskaResult.put("nebraska_score", "")
         nebraskaResult.put("opponent_score", "")
-        nebraskaGame.set<ObjectNode>("schedule_event_result", nebraskaResult)
+        nebraskaGame.set("schedule_event_result", nebraskaResult)
         
         assertTrue(cmd.isNebraskaGame(nebraskaGame))
         
@@ -676,7 +676,7 @@ class VbSchedTest {
         val nebraskaResult2 = factory.objectNode()
         nebraskaResult2.put("nebraska_score", "")
         nebraskaResult2.put("opponent_score", "")
-        nebraskaGame2.set<ObjectNode>("schedule_event_result", nebraskaResult2)
+        nebraskaGame2.set("schedule_event_result", nebraskaResult2)
         
         assertTrue(cmd.isNebraskaGame(nebraskaGame2))
         
@@ -689,7 +689,7 @@ class VbSchedTest {
         val tournamentResult = factory.objectNode()
         tournamentResult.put("nebraska_score", "")
         tournamentResult.put("opponent_score", "")
-        tournamentGame.set<ObjectNode>("schedule_event_result", tournamentResult)
+        tournamentGame.set("schedule_event_result", tournamentResult)
         
         assertFalse(cmd.isNebraskaGame(tournamentGame))
         
@@ -697,11 +697,11 @@ class VbSchedTest {
         val gameWithScores = factory.objectNode()
         gameWithScores.put("opponent_name", "Wisconsin")
         gameWithScores.put("venue_type", "home")
-        gameWithScores.set<ObjectNode>("second_opponent_id", factory.nullNode())
+        gameWithScores.set("second_opponent_id", factory.nullNode())
         val scoreResult = factory.objectNode()
         scoreResult.put("nebraska_score", "25")
         scoreResult.put("opponent_score", "20")
-        gameWithScores.set<ObjectNode>("schedule_event_result", scoreResult)
+        gameWithScores.set("schedule_event_result", scoreResult)
         
         assertTrue(cmd.isNebraskaGame(gameWithScores))
         
@@ -709,11 +709,11 @@ class VbSchedTest {
         val emptyOpponentGame = factory.objectNode()
         emptyOpponentGame.put("opponent_name", "")
         emptyOpponentGame.put("venue_type", "")
-        emptyOpponentGame.set<ObjectNode>("second_opponent_id", factory.nullNode())
+        emptyOpponentGame.set("second_opponent_id", factory.nullNode())
         val emptyResult = factory.objectNode()
         emptyResult.put("nebraska_score", "")
         emptyResult.put("opponent_score", "")
-        emptyOpponentGame.set<ObjectNode>("schedule_event_result", emptyResult)
+        emptyOpponentGame.set("schedule_event_result", emptyResult)
         
         assertFalse(cmd.isNebraskaGame(emptyOpponentGame))
         
@@ -721,11 +721,11 @@ class VbSchedTest {
         val gameWithScoresNoOpponent = factory.objectNode()
         gameWithScoresNoOpponent.put("opponent_name", "")
         gameWithScoresNoOpponent.put("venue_type", "")
-        gameWithScoresNoOpponent.set<ObjectNode>("second_opponent_id", factory.nullNode())
+        gameWithScoresNoOpponent.set("second_opponent_id", factory.nullNode())
         val scoreResultNoOpponent = factory.objectNode()
         scoreResultNoOpponent.put("nebraska_score", "24")
         scoreResultNoOpponent.put("opponent_score", "21")
-        gameWithScoresNoOpponent.set<ObjectNode>("schedule_event_result", scoreResultNoOpponent)
+        gameWithScoresNoOpponent.set("schedule_event_result", scoreResultNoOpponent)
         
         assertTrue(cmd.isNebraskaGame(gameWithScoresNoOpponent))
     }

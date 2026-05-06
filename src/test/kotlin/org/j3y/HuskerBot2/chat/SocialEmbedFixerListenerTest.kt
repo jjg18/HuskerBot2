@@ -87,7 +87,7 @@ class SocialEmbedFixerListenerTest {
         val contentOnly = posted.substringAfter("posted:").trim()
         val lines = contentOnly.split('\n').filter { it.isNotBlank() }
 
-        assertTrue(lines.any { it.startsWith("https://eeinstagram.com/") })
+        assertTrue(lines.any { it.startsWith("https://vxinstagram.com/") })
         assertTrue(lines.any { it.startsWith("https://tnktok.com/") })
         // all reddit variants should be converted to rxddit.com
         assertTrue(lines.count { it.startsWith("https://rxddit.com/") } >= 3)

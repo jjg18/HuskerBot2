@@ -47,8 +47,8 @@ class UrbanDictionaryService(
                         word = node.get("word")?.asText() ?: term,
                         definition = cleanUdText(node.get("definition")?.asText() ?: ""),
                         example = cleanUdText(node.get("example")?.asText() ?: ""),
-                        author = node.get("author")?.asText(),
-                        permalink = node.get("permalink")?.asText()
+                        author = node.get("author")?.takeIf { !it.isNull }?.asText(),
+                        permalink = node.get("permalink")?.takeIf { !it.isNull }?.asText()
                     )
                 }
             } else {

@@ -73,10 +73,10 @@ class NflPickemProcessingTest {
     ): JsonNode {
         val root = mapper.createObjectNode()
         val events = mapper.createArrayNode()
-        root.set<ArrayNode>("events", events)
+        root.set("events", events)
         val season = mapper.createObjectNode()
         season.put("year", SeasonResolver.currentNflSeason())
-        root.set<ObjectNode>("season", season)
+        root.set("season", season)
 
         val event = mapper.createObjectNode()
         event.put("id", eventId)
@@ -85,8 +85,8 @@ class NflPickemProcessingTest {
         val statusType = mapper.createObjectNode()
         statusType.put("name", "STATUS_SCHEDULED")
         statusType.put("shortDetail", "Sun 12:25 PM")
-        status.set<ObjectNode>("type", statusType)
-        event.set<ObjectNode>("status", status)
+        status.set("type", statusType)
+        event.set("status", status)
 
         val comp = mapper.createObjectNode()
         val competitors = mapper.createArrayNode()
@@ -104,18 +104,18 @@ class NflPickemProcessingTest {
             val logoObj = mapper.createObjectNode()
             logoObj.put("href", logo)
             logos.add(logoObj)
-            team.set<ArrayNode>("logos", logos)
-            compNode.set<ObjectNode>("team", team)
+            team.set("logos", logos)
+            compNode.set("team", team)
             val records = mapper.createArrayNode()
             val r = mapper.createObjectNode()
             r.put("summary", recSummary)
             records.add(r)
-            compNode.set<ArrayNode>("records", records)
+            compNode.set("records", records)
             return compNode
         }
         competitors.add(competitor(homeName, homeId, "home"))
         competitors.add(competitor(awayName, awayId, "away"))
-        comp.set<ArrayNode>("competitors", competitors)
+        comp.set("competitors", competitors)
 
         if (includeOdds) {
             val odds = mapper.createArrayNode()
@@ -124,12 +124,12 @@ class NflPickemProcessingTest {
             o.put("overUnder", 48.5)
             o.put("spread", 3.5)
             odds.add(o)
-            comp.set<ArrayNode>("odds", odds)
+            comp.set("odds", odds)
         }
 
         val competitions = mapper.createArrayNode()
         competitions.add(comp)
-        event.set<ArrayNode>("competitions", competitions)
+        event.set("competitions", competitions)
 
         events.add(event)
         return root
@@ -258,7 +258,7 @@ class NflPickemProcessingTest {
     fun `postWeeklyPickem posts season leaderboard message when no picks recorded`() {
         // Scoreboard with no events to shortcut
         val root = mapper.createObjectNode()
-        root.set<ArrayNode>("events", mapper.createArrayNode())
+        root.set("events", mapper.createArrayNode())
         `when`(espn.getNflScoreboard(Mockito.anyInt())).thenReturn(root)
 
         val ch = mockChannelWithPermissions("chan")
@@ -296,7 +296,7 @@ class NflPickemProcessingTest {
         // Call public method that triggers ensurePickemChannelReadOnly internally
         // We also need ESPn scoreboard and channel to continue
         val root = mapper.createObjectNode()
-        root.set<ArrayNode>("events", mapper.createArrayNode())
+        root.set("events", mapper.createArrayNode())
         `when`(espn.getNflScoreboard(Mockito.anyInt())).thenReturn(root)
 
         // Also stub sendMessage for season leaderboard path
@@ -342,7 +342,7 @@ class NflPickemProcessingTest {
 
         // Return scoreboard without events to simplify
         val root = mapper.createObjectNode()
-        root.set<ArrayNode>("events", mapper.createArrayNode())
+        root.set("events", mapper.createArrayNode())
         `when`(espn.getNflScoreboard(Mockito.anyInt())).thenReturn(root)
         
         `when`(msgAction.addActionRow(Mockito.any(net.dv8tion.jda.api.interactions.components.ItemComponent::class.java))).thenReturn(msgAction)
@@ -377,7 +377,7 @@ class NflPickemProcessingTest {
 
         // For week 19, it should still process prev week (18) and post results
         val scoreboard18 = mapper.createObjectNode()
-        scoreboard18.set<ArrayNode>("events", mapper.createArrayNode())
+        scoreboard18.set("events", mapper.createArrayNode())
         `when`(espn.getNflScoreboard(18)).thenReturn(scoreboard18)
 
         processing.postWeeklyPickem(19)
