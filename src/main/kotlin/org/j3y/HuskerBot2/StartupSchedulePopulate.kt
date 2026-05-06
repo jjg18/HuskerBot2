@@ -1,6 +1,6 @@
 package org.j3y.HuskerBot2
 
-import com.fasterxml.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.ArrayNode
 import jakarta.annotation.PostConstruct
 import org.j3y.HuskerBot2.automation.backup.DatabaseBackupService
 import org.j3y.HuskerBot2.model.ScheduleEntity

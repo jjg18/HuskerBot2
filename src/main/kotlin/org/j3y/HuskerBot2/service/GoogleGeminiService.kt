@@ -1,16 +1,14 @@
 package org.j3y.HuskerBot2.service
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.retry.annotation.Backoff
-import org.springframework.retry.annotation.Recover
-import org.springframework.retry.annotation.Retryable
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
+import org.springframework.resilience.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
@@ -27,7 +25,7 @@ open class GoogleGeminiService(
     private val client = RestTemplate()
     private val mapper = ObjectMapper()
 
-    @Retryable(include = [HttpStatusCodeException::class], maxAttempts = 5, backoff = Backoff(delay = 5000))
+    @Retryable(includes = [HttpStatusCodeException::class], maxRetries = 5, delay = 5000)
     open fun generateText(prompt: String): String {
         if (apiKey.isBlank()) {
             return "Gemini is not configured. Please set gemini.api-key in application.yml or environment."
@@ -77,7 +75,7 @@ open class GoogleGeminiService(
         data class Error(val message: String) : ImageResult()
     }
 
-    @Retryable(include = [HttpStatusCodeException::class], maxAttempts = 5, backoff = Backoff(delay = 5000))
+    @Retryable(includes = [HttpStatusCodeException::class], maxRetries = 5, delay = 5000)
     open fun generateImage(prompt: String): ImageResult {
         if (apiKey.isBlank()) {
             return ImageResult.Error("Gemini is not configured. Please set gemini.api-key in application.yml or environment.")
@@ -118,7 +116,7 @@ open class GoogleGeminiService(
         }
 
         // Find the first part that has inline_data (image) or file_data
-        val iterator = parts.elements()
+        val iterator = parts.iterator()
         while (iterator.hasNext()) {
             val part = iterator.next()
             val inline = part.get("inlineData")
@@ -146,7 +144,7 @@ open class GoogleGeminiService(
     /**
      * Update/transform an input image using a guidance prompt via Gemini Image model.
      */
-    @Retryable(include = [HttpStatusCodeException::class], maxAttempts = 5, backoff = Backoff(delay = 5000))
+    @Retryable(includes = [HttpStatusCodeException::class], maxRetries = 5, delay = 5000, )
     open fun updateImageWithPrompt(imageBytes: ByteArray, mimeType: String?, prompt: String): ImageResult {
         if (apiKey.isBlank()) {
             return ImageResult.Error("Gemini is not configured. Please set gemini.api-key in application.yml or environment.")
@@ -196,7 +194,7 @@ open class GoogleGeminiService(
             return ImageResult.Error("No image returned by Gemini.")
         }
 
-        val iterator = parts.elements()
+        val iterator = parts.iterator()
         while (iterator.hasNext()) {
             val part = iterator.next()
             val inline = part.get("inlineData")
@@ -220,31 +218,4 @@ open class GoogleGeminiService(
         return ImageResult.Error("Gemini response did not include image data.")
     }
 
-    @Recover
-    fun recoverGenerateText(ex: HttpStatusCodeException, prompt: String): String {
-        log.error("Error calling Google Gemini API after retries", ex)
-        val response = mapper.readTree(ex.responseBodyAsString).path("error").path("message").asText()
-
-        return "Error calling Gemini: ${response.ifEmpty { ex.message }}"
-    }
-
-    @Recover
-    fun recoverGenerateImage(ex: HttpStatusCodeException, prompt: String): ImageResult {
-        log.error("Error calling Google Gemini Image API after retries", ex)
-        val response = mapper.readTree(ex.responseBodyAsString).path("error").path("message").asText()
-
-        return ImageResult.Error("Error calling Gemini: ${response.ifEmpty { ex.message }}")
-    }
-
-    @Recover
-    fun recoverUpdateImage(
-        ex: HttpStatusCodeException,
-        imageBytes: ByteArray,
-        mimeType: String?,
-        prompt: String
-    ): ImageResult {
-        log.error("Error calling Google Gemini Image Update API after retries", ex)
-        val response = mapper.readTree(ex.responseBodyAsString).path("error").path("message").asText()
-        return ImageResult.Error("Error calling Gemini: ${response.ifEmpty { ex.message }}")
-    }
 }

@@ -1,9 +1,9 @@
 plugins {
-	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25"
-	id("org.springframework.boot") version "3.5.5"
+	kotlin("jvm") version "2.3.21"
+	kotlin("plugin.spring") version "2.3.21"
+	id("org.springframework.boot") version "4.0.6"
 	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("plugin.jpa") version "1.9.25"
+	kotlin("plugin.jpa") version "2.3.21"
 }
 
 group = "org.j3y"
@@ -22,9 +22,7 @@ repositories {
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
-    // Spring Retry support
-    implementation("org.springframework.retry:spring-retry")
-    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("org.springframework.boot:spring-boot-starter-aspectj")
 	// Playwright for headless browser fetching
 	implementation("com.microsoft.playwright:playwright:1.47.0")
 	// Jsoup for HTML parsing/stripping
@@ -32,13 +30,13 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-cache")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
-	implementation("com.github.kagkarlsson:db-scheduler-spring-boot-starter:15.6+")
+	implementation("com.github.kagkarlsson:db-scheduler-spring-boot-4-starter:16.7.+")
 	implementation("com.github.ben-manes.caffeine:caffeine")
 	implementation("net.dv8tion:JDA:5.6.+")
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.+")
     implementation("org.apache.httpcomponents.core5:httpcore5:5.+")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("tools.jackson.module:jackson-module-kotlin")
 	implementation("org.bytedeco:opencv-platform:4.9.0-1.5.10") // OpenCV for eye detection for deepfry
 	implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0") // ImageIO WebP support for deepfry
 
