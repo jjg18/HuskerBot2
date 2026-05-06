@@ -2,7 +2,7 @@ package org.j3y.HuskerBot2.automation.pickem.nfl
 
 import org.springframework.stereotype.Component
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission

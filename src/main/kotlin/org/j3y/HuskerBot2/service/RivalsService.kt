@@ -1,6 +1,6 @@
 package org.j3y.HuskerBot2.service
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
@@ -98,14 +98,16 @@ class RivalsService {
         val response = client.getForObject(uri, JsonNode::class.java)
 
         val prospects = response?.at("/pageProps/teamTargets/list") ?: return emptyList()
-        return prospects.map {
-            RecruitProspects(
+        val result = mutableListOf<RecruitProspects>()
+        for (it in prospects) {
+            result.add(RecruitProspects(
                 teamName = it.at("/team/fullName").asText("N/A"),
                 status = it.path("status").asText("N/A"),
                 prediction = it.path("prediction").asDouble(),
                 officialVisitCount = it.path("officialVisitCount").asInt(),
                 unofficialVisitCount = it.path("unOfficialVisitCount").asInt(),
-            )
+            ))
         }
+        return result
     }
 }

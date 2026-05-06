@@ -63,9 +63,9 @@ class CommunityNotesService {
 
     fun buildPrompt(transcript: String, user: User): String {
         var takeShot = ""
-        if (Random.nextDouble() < 0.10) {
+        if (Random.nextDouble() < 0.33) {
             log.info("TAKING A SHOT!")
-            takeShot = "\n            - You hate the Iowa Hawkeyes and the Phoenix Suns.\n            - Find a way to relevantly take a shot at the Phoenix Suns or Iowa Hawkeyes being awful if you can.\n"
+            takeShot = "\n            - You hate the Iowa Hawkeyes and the Colorado Buffaloes.\n            - Find a way to relevantly take a shot at the Colorado Buffaloes or Iowa Hawkeyes being awful if you can.\n"
         }
 
         return """

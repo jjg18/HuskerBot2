@@ -1,8 +1,8 @@
 package org.j3y.HuskerBot2
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.ObjectNode
 import org.j3y.HuskerBot2.model.ScheduleEntity
 import org.j3y.HuskerBot2.repository.ScheduleRepo
 import org.j3y.HuskerBot2.scheduler.SunriseSunsetScheduler
@@ -66,7 +66,7 @@ class StartupSchedulePopulateTest {
         game.put("opponent_name", opponent)
         val logo = mapper.createObjectNode()
         logo.put("url", logoUrl)
-        game.set<ObjectNode>("opponent_logo", logo)
+        game.set("opponent_logo", logo)
         game.put("datetime", datetime.toString())
         game.put("is_conference", isConference)
         game.put("venue_type", venueType)
@@ -77,7 +77,7 @@ class StartupSchedulePopulateTest {
         val root = mapper.createObjectNode()
         val arr: ArrayNode = mapper.createArrayNode()
         games.forEach { arr.add(it) }
-        root.set<ArrayNode>("data", arr)
+        root.set("data", arr)
         return root
     }
 
@@ -177,7 +177,7 @@ class StartupSchedulePopulateTest {
         fun `does nothing when no games returned`() {
             val year = SeasonResolver.currentCfbSeason()
             val empty = mapper.createObjectNode().apply {
-                set<ArrayNode>("data", mapper.createArrayNode())
+                set("data", mapper.createArrayNode())
             }
 
             Mockito.`when`(huskersDotComService.getSchedule(year)).thenReturn(empty)

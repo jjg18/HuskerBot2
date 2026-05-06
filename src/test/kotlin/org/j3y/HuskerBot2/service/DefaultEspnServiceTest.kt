@@ -1,7 +1,7 @@
 package org.j3y.HuskerBot2.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.ObjectNode
 import net.dv8tion.jda.api.entities.MessageEmbed
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test

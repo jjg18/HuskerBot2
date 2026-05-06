@@ -141,6 +141,7 @@ class SummarizeTest {
         // Event user for footer
         val evUser = Mockito.mock(User::class.java)
         `when`(evUser.asTag).thenReturn("tester#0001")
+        `when`(evUser.effectiveName).thenReturn("tester")
         `when`(event.user).thenReturn(evUser)
 
         // Mock JDA spam channel flow
@@ -224,6 +225,7 @@ class SummarizeTest {
 
         val evUser = Mockito.mock(User::class.java)
         `when`(evUser.asTag).thenReturn("tester#0001")
+        `when`(evUser.effectiveName).thenReturn("tester")
         `when`(event.user).thenReturn(evUser)
 
         cmd.execute(event)
@@ -273,6 +275,7 @@ class SummarizeTest {
 
         val evUser = Mockito.mock(User::class.java)
         `when`(evUser.asTag).thenReturn("tester#0001")
+        `when`(evUser.effectiveName).thenReturn("tester")
         `when`(event.user).thenReturn(evUser)
 
         // Mock JDA spam channel flow

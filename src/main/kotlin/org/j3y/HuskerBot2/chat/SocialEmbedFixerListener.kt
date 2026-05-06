@@ -48,7 +48,7 @@ class SocialEmbedFixerListener : ListenerAdapter() {
                     // Instagram -> kkinstagram
                     lower.contains("://instagram.com/") || lower.contains("://www.instagram.com/") ->
                         url.replace(Regex("^(https?://)(?:www\\.)?instagram\\.com", RegexOption.IGNORE_CASE),
-                            "$1eeinstagram.com")
+                            "$1vxinstagram.com")
 
                     // Bluesky -> fxbsky
                     lower.contains("://bsky.app/") || lower.contains("://www.bsky.app/") ->
