@@ -1,6 +1,7 @@
 package org.j3y.HuskerBot2.chat
 
 import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
@@ -49,7 +50,7 @@ class HallOfFameListener(
             }
             
             if (shameReaction != null) {
-                forwardToHallOfShame(message)
+                forwardToHallOfShame(message, shameReaction.emoji)
                 processedMessages.add(messageId)
                 return
             }
@@ -99,7 +100,7 @@ class HallOfFameListener(
         )
     }
     
-    private fun forwardToHallOfShame(message: net.dv8tion.jda.api.entities.Message) {
+    private fun forwardToHallOfShame(message: Message, emoji: Emoji) {
         val guild = message.guild
         val hallOfShameChannel = guild.getTextChannelById(hallOfShameChannelId)
         
@@ -111,10 +112,10 @@ class HallOfFameListener(
         val embed = EmbedBuilder()
             .setColor(Color.RED)
             .setTitle("🐌 Hall of Shame")
-            .setDescription("A message has been deemed too slow for this world!")
+            .setDescription("A message has been deemed worthy of shame!")
             .addField("Author", message.author.asMention, true)
             .addField("Channel", message.channel.asMention, true)
-            .addField("Reaction", ":slowpoke:", true)
+            .addField("Reaction", emoji.formatted, true)
             .addField("Message", message.contentDisplay.take(1000), false)
             .addField("Jump to Message", "[Click here](${message.jumpUrl})", false)
             .setTimestamp(Instant.now())
