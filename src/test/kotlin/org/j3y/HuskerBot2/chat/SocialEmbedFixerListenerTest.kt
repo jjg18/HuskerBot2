@@ -89,8 +89,8 @@ class SocialEmbedFixerListenerTest {
 
         assertTrue(lines.any { it.startsWith("https://vxinstagram.com/") })
         assertTrue(lines.any { it.startsWith("https://tnktok.com/") })
-        // all reddit variants should be converted to rxddit.com
-        assertTrue(lines.count { it.startsWith("https://rxddit.com/") } >= 3)
+        // all reddit variants should be converted to vxreddit.com
+        assertTrue(lines.count { it.startsWith("https://vxreddit.com/") } >= 3)
     }
 
     @Test
@@ -147,7 +147,7 @@ class SocialEmbedFixerListenerTest {
     @Test
     fun `does nothing when urls already on target domains or no relevant urls`() {
         val listener = SocialEmbedFixerListener()
-        val alreadyGood = "Here are good ones https://fxtwitter.com/a/b https://vxtiktok.com/x/y https://kkinstagram.com/p/1 https://embedez.seria.moe/embed?url=foo https://rxddit.com/r/a https://fxbsky.app/profile/handle/post/123"
+        val alreadyGood = "Here are good ones https://fxtwitter.com/a/b https://vxtiktok.com/x/y https://kkinstagram.com/p/1 https://embedez.seria.moe/embed?url=foo https://vxreddit.com/r/a https://fxbsky.app/profile/handle/post/123"
         val (event1, message1, _) = basicEventWithMessage(alreadyGood)
         listener.onMessageReceived(event1)
         Mockito.verify(message1, Mockito.never()).suppressEmbeds(true)
