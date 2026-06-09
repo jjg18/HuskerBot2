@@ -20,6 +20,7 @@ class HallOfFameListener(
     private final val log = LoggerFactory.getLogger(HallOfFameListener::class.java)
     
     private final val slowpokeEmoji = "slowpoke"
+    private final val embedEmoji = "embed"
     private final val reactionThreshold = 10
     
     private val processedMessages = mutableSetOf<String>()
@@ -40,12 +41,14 @@ class HallOfFameListener(
             
             val reactions = message.reactions
             
-            // Check for hall of shame (slowpoke emoji with 10+ reactions)
-            val slowpokeReaction = reactions.find { reaction ->
-                reaction.emoji.name.equals(slowpokeEmoji, ignoreCase = true)
+            // Check for hall of shame (slowpoke or embed emoji with 10+ reactions)
+            val shameReaction = reactions.find { reaction ->
+                (reaction.emoji.name.equals(slowpokeEmoji, ignoreCase = true) ||
+                reaction.emoji.name.equals(embedEmoji, ignoreCase = true)) &&
+                reaction.count >= reactionThreshold
             }
             
-            if (slowpokeReaction != null && slowpokeReaction.count >= reactionThreshold) {
+            if (shameReaction != null) {
                 forwardToHallOfShame(message)
                 processedMessages.add(messageId)
                 return
@@ -54,7 +57,8 @@ class HallOfFameListener(
             // Check for hall of fame (any emoji with 10+ reactions, excluding slowpoke)
             val eligibleReaction = reactions.find { reaction ->
                 reaction.count >= reactionThreshold && 
-                !reaction.emoji.name.equals(slowpokeEmoji, ignoreCase = true)
+                !reaction.emoji.name.equals(slowpokeEmoji, ignoreCase = true) &&
+                !reaction.emoji.name.equals(embedEmoji, ignoreCase = true)
             }
             
             if (eligibleReaction != null) {

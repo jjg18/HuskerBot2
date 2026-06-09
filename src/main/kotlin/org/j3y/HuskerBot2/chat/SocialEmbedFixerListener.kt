@@ -32,7 +32,7 @@ class SocialEmbedFixerListener : ListenerAdapter() {
                 val lower = url.lowercase()
                 when {
                     // Skip if already using better domains
-                    lower.contains("fxtwitter.com") || lower.contains("vxtiktok.com") || lower.contains("kkinstagram.com") || lower.contains("embedez.seria.moe") || lower.contains("rxddit.com") || lower.contains("fxbsky.app") -> null
+                    lower.contains("fxtwitter.com") || lower.contains("vxtiktok.com") || lower.contains("kkinstagram.com") || lower.contains("embedez.seria.moe") || lower.contains("vxreddit.com") || lower.contains("fxbsky.app") -> null
 
                     // Twitter/X -> fxtwitter
                     lower.contains("://twitter.com/") || lower.contains("://www.twitter.com/") ||
@@ -60,12 +60,12 @@ class SocialEmbedFixerListener : ListenerAdapter() {
                             lower.contains("://m.facebook.com/share/r/") ->
                         "https://embedez.seria.moe/embed?url=" + URLEncoder.encode(url, "UTF-8")
 
-                    // Reddit -> rxddit
+                    // Reddit -> vxreddit
                     lower.contains("://reddit.com/") || lower.contains("://www.reddit.com/") ||
                             lower.contains("://old.reddit.com/") || lower.contains("://m.reddit.com/") ||
                             lower.contains("://np.reddit.com/") ->
                         url.replace(Regex("^(https?://)(?:www\\.|old\\.|m\\.|np\\.)?reddit\\.com", RegexOption.IGNORE_CASE),
-                            "$1rxddit.com")
+                            "$1vxreddit.com")
 
                     else -> null
                 }
