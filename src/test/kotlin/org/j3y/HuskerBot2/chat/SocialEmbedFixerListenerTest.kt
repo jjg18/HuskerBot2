@@ -5,6 +5,8 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import org.j3y.HuskerBot2.model.SocialEmbedReplacementEntity
+import org.j3y.HuskerBot2.service.SocialEmbedReplacementService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -13,6 +15,31 @@ import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 
 class SocialEmbedFixerListenerTest {
+
+    /** A fake service that applies the same default rules as the production seed, without a DB. */
+    private fun fakeService(): SocialEmbedReplacementService {
+        val repo = Mockito.mock(org.j3y.HuskerBot2.repository.SocialEmbedReplacementRepo::class.java)
+        val defaults = listOf(
+            SocialEmbedReplacementEntity(matchPattern = "fxtwitter.com/", replaceRegex = "", replaceWith = "", strategy = "SKIP", label = "fxtwitter skip", sortOrder = 1),
+            SocialEmbedReplacementEntity(matchPattern = "vxtiktok.com/", replaceRegex = "", replaceWith = "", strategy = "SKIP", label = "vxtiktok skip", sortOrder = 2),
+            SocialEmbedReplacementEntity(matchPattern = "tnktok.com/", replaceRegex = "", replaceWith = "", strategy = "SKIP", label = "tnktok skip", sortOrder = 3),
+            SocialEmbedReplacementEntity(matchPattern = "kkinstagram.com/", replaceRegex = "", replaceWith = "", strategy = "SKIP", label = "kkinstagram skip", sortOrder = 4),
+            SocialEmbedReplacementEntity(matchPattern = "vxinstagram.com/", replaceRegex = "", replaceWith = "", strategy = "SKIP", label = "vxinstagram skip", sortOrder = 5),
+            SocialEmbedReplacementEntity(matchPattern = "embedez.seria.moe/", replaceRegex = "", replaceWith = "", strategy = "SKIP", label = "embedez skip", sortOrder = 6),
+            SocialEmbedReplacementEntity(matchPattern = "vxreddit.com/", replaceRegex = "", replaceWith = "", strategy = "SKIP", label = "vxreddit skip", sortOrder = 7),
+            SocialEmbedReplacementEntity(matchPattern = "fxbsky.app/", replaceRegex = "", replaceWith = "", strategy = "SKIP", label = "fxbsky skip", sortOrder = 8),
+            SocialEmbedReplacementEntity(matchPattern = "twitter.com/", replaceRegex = "^(https?://)(?:www\\.)?(?:twitter|x)\\.com", replaceWith = "\$1fxtwitter.com", strategy = "REGEX", label = "Twitter/X -> fxtwitter", sortOrder = 10),
+            SocialEmbedReplacementEntity(matchPattern = "x.com/", replaceRegex = "^(https?://)(?:www\\.)?(?:twitter|x)\\.com", replaceWith = "\$1fxtwitter.com", strategy = "REGEX", label = "X.com -> fxtwitter", sortOrder = 11),
+            SocialEmbedReplacementEntity(matchPattern = "tiktok.com/", replaceRegex = "^(https?://)(?:www\\.)?tiktok\\.com", replaceWith = "\$1tnktok.com", strategy = "REGEX", label = "TikTok -> tnktok", sortOrder = 20),
+            SocialEmbedReplacementEntity(matchPattern = "instagram.com/", replaceRegex = "^(https?://)(?:www\\.)?instagram\\.com", replaceWith = "\$1vxinstagram.com", strategy = "REGEX", label = "Instagram -> vxinstagram", sortOrder = 30),
+            SocialEmbedReplacementEntity(matchPattern = "bsky.app/", replaceRegex = "^(https?://)(?:www\\.)?bsky\\.app", replaceWith = "\$1fxbsky.app", strategy = "REGEX", label = "Bluesky -> fxbsky", sortOrder = 40),
+            SocialEmbedReplacementEntity(matchPattern = "facebook.com/share/r/", replaceRegex = "", replaceWith = "https://embedez.seria.moe/embed?url=", strategy = "WRAP", label = "Facebook reel -> embedez", sortOrder = 50),
+            SocialEmbedReplacementEntity(matchPattern = "reddit.com/", replaceRegex = "^(https?://)(?:www\\.|old\\.|m\\.|np\\.)?reddit\\.com", replaceWith = "\$1vxreddit.com", strategy = "REGEX", label = "Reddit -> vxreddit", sortOrder = 60),
+        )
+        `when`(repo.count()).thenReturn(defaults.size.toLong())
+        `when`(repo.findAllByOrderBySortOrderAsc()).thenReturn(defaults)
+        return SocialEmbedReplacementService(repo)
+    }
 
     private fun basicEventWithMessage(
         content: String,
@@ -43,7 +70,7 @@ class SocialEmbedFixerListenerTest {
 
     @Test
     fun `converts twitter and x links to fxtwitter, dedupes, suppresses embeds, and posts replacements`() {
-        val listener = SocialEmbedFixerListener()
+        val listener = SocialEmbedFixerListener(fakeService())
         val input = "Check these https://twitter.com/user/status/123 and https://x.com/u/status/456 and https://fxtwitter.com/already/ok"
         val (event, message, _) = basicEventWithMessage(input)
 
@@ -68,7 +95,7 @@ class SocialEmbedFixerListenerTest {
 
     @Test
     fun `converts instagram tiktok reddit variants correctly`() {
-        val listener = SocialEmbedFixerListener()
+        val listener = SocialEmbedFixerListener(fakeService())
         val input = listOf(
             "https://www.instagram.com/p/abc123",
             "https://tiktok.com/@user/video/987",
@@ -95,7 +122,7 @@ class SocialEmbedFixerListenerTest {
 
     @Test
     fun `converts facebook share r to embedez with encoded url`() {
-        val listener = SocialEmbedFixerListener()
+        val listener = SocialEmbedFixerListener(fakeService())
         val source = "https://www.facebook.com/share/r/abc?mibextid=123"
         val (event, message, _) = basicEventWithMessage(source)
 
@@ -112,7 +139,7 @@ class SocialEmbedFixerListenerTest {
 
     @Test
     fun `ignores when author is bot system or webhook or blank content`() {
-        val listener = SocialEmbedFixerListener()
+        val listener = SocialEmbedFixerListener(fakeService())
 
         // bot
         run {
@@ -146,7 +173,7 @@ class SocialEmbedFixerListenerTest {
 
     @Test
     fun `does nothing when urls already on target domains or no relevant urls`() {
-        val listener = SocialEmbedFixerListener()
+        val listener = SocialEmbedFixerListener(fakeService())
         val alreadyGood = "Here are good ones https://fxtwitter.com/a/b https://vxtiktok.com/x/y https://kkinstagram.com/p/1 https://embedez.seria.moe/embed?url=foo https://vxreddit.com/r/a https://fxbsky.app/profile/handle/post/123"
         val (event1, message1, _) = basicEventWithMessage(alreadyGood)
         listener.onMessageReceived(event1)
@@ -161,7 +188,7 @@ class SocialEmbedFixerListenerTest {
     }
     @Test
     fun `converts bluesky links to fxbsky`() {
-        val listener = SocialEmbedFixerListener()
+        val listener = SocialEmbedFixerListener(fakeService())
         val input = "Check https://bsky.app/profile/handle.example/post/3k4l5m and https://www.bsky.app/profile/did:plc:abc123/post/xyz"
         val (event, message, _) = basicEventWithMessage(input)
 
