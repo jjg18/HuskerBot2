@@ -41,6 +41,8 @@ dependencies {
 	implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0") // ImageIO WebP support for deepfry
 
 	runtimeOnly("com.h2database:h2")
+	runtimeOnly("org.springframework.boot:spring-boot-h2console")
+
 	runtimeOnly("com.mysql:mysql-connector-j")
 	
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
