@@ -38,6 +38,9 @@ class StartupSchedulePopulate {
             val venueType = game.path("venue_type").asText()
             val venue = game.path("venue").asText()
 
+            if (game.path("opponent_id").isNull)
+                return@forEach
+
             val week = SeasonResolver.getCfbWeek(datetime)
 
             val sched: ScheduleEntity = scheduleRepo.findById(id).orElse(ScheduleEntity(id))

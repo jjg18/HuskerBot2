@@ -120,7 +120,7 @@ class StartupSchedulePopulateTest {
             assertEquals("http://logo/a.png", game1.opponentLogo)
             assertEquals(dt1, game1.dateTime)
             assertEquals(year, game1.season)
-            assertEquals(1, game1.week, "Week should be index+1 (first item = 1)")
+            assertEquals(1, game1.week, "Week should be 1 (before first week boundary)")
 
             val game2 = saved.first { it.id == 2L }
             assertEquals("Team B", game2.opponent)
@@ -130,7 +130,7 @@ class StartupSchedulePopulateTest {
             assertEquals("http://logo/b.png", game2.opponentLogo)
             assertEquals(dt2, game2.dateTime)
             assertEquals(year, game2.season)
-            assertEquals(2, game2.week, "Week should be cfb week")
+            assertEquals(1, game2.week, "Week should be 1 (before Sept 8 boundary)")
         }
 
         @Test
@@ -170,7 +170,7 @@ class StartupSchedulePopulateTest {
             assertEquals("http://logo/wisc.png", saved.opponentLogo)
             assertEquals(dt, saved.dateTime)
             assertEquals(year, saved.season)
-            assertEquals(5, saved.week)
+            assertEquals(4, saved.week)
         }
 
         @Test
