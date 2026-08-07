@@ -38,8 +38,14 @@ class CommunityNotesContext(
             }
 
 
-            val transcript = commandEvent.target.contentStripped
-            val prompt = notesService.buildPrompt(transcript, selectedUser)
+            val targetMessage = commandEvent.target
+            val transcript = targetMessage.contentStripped
+
+            // We want the 10 immediate messages (from any author) that come right before the target message.
+            val contextMessages = notesService.fetchMessagesBefore(channel, targetMessage.idLong, 10)
+            val contextBlock = notesService.buildContextBlock(contextMessages)
+
+            val prompt = notesService.buildPrompt(transcript, selectedUser, contextBlock)
 
             val response = geminiService.generateText(prompt)
             val cleaned = notesService.sanitizeForDiscord(response)
