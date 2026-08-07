@@ -27,6 +27,19 @@ class CommunityNotesService {
         }
     }
 
+    /**
+     * Fetches up to [limit] messages immediately preceding the message with the given [messageId]
+     * in [channel], newest-first (i.e. the message right before [messageId] comes first).
+     */
+    fun fetchMessagesBefore(channel: GuildMessageChannel, messageId: Long, limit: Int): List<Message> {
+        return try {
+            channel.getHistoryBefore(messageId, limit.coerceIn(1, 100)).complete().retrievedHistory
+        } catch (e: Exception) {
+            log.error("Error fetching messages before $messageId", e)
+            emptyList()
+        }
+    }
+
     fun shouldIncludeMessage(message: Message): Boolean {
         if (message.author.isBot) return false
         if (message.isWebhookMessage) return false
@@ -61,12 +74,63 @@ class CommunityNotesService {
         return "${user.asMention} said:" + "\n> $transcript"
     }
 
-    fun buildPrompt(transcript: String, user: User): String {
+    /**
+     * Builds a chronological (oldest first) context block from a list of messages (excluding the
+     * message(s) being fact-checked), noting who said what and including any embed data attached
+     * to those messages when available.
+     */
+    fun buildContextBlock(messagesNewestFirst: List<Message>): String {
+        if (messagesNewestFirst.isEmpty()) return ""
+
+        return messagesNewestFirst.asReversed().joinToString("\n\n") { m ->
+            val clean = m.contentStripped
+                .replace(Regex("https?://\\S+"), "[link]")
+                .replace("@everyone", "@\u200Beveryone")
+                .replace("@here", "@\u200Bhere")
+            val authorName = m.author.name
+            val lines = mutableListOf<String>()
+            if (clean.isNotBlank()) {
+                lines.add("${authorName}: ${clean}")
+            }
+
+            m.embeds.forEach { embed ->
+                val embedParts = mutableListOf<String>()
+                embed.title?.let { embedParts.add("Title: $it") }
+                embed.description?.let { embedParts.add("Description: $it") }
+                embed.author?.name?.let { embedParts.add("Author: $it") }
+                embed.fields.forEach { field ->
+                    embedParts.add("${field.name}: ${field.value}")
+                }
+                embed.footer?.text?.let { embedParts.add("Footer: $it") }
+                if (embedParts.isNotEmpty()) {
+                    lines.add("${authorName} shared an embed - " + embedParts.joinToString(" | "))
+                }
+            }
+
+            if (lines.isEmpty()) {
+                "${authorName}: (no text content)"
+            } else {
+                lines.joinToString("\n")
+            }
+        }
+    }
+
+    fun buildPrompt(transcript: String, user: User, contextBlock: String = ""): String {
         var takeShot = ""
         if (Random.nextDouble() < 0.33) {
             log.info("TAKING A SHOT!")
             takeShot = "\n            - You hate the Iowa Hawkeyes and the Colorado Buffaloes.\n            - Find a way to relevantly take a shot at the Colorado Buffaloes or Iowa Hawkeyes being awful if you can.\n"
         }
+
+        val contextSection = if (contextBlock.isNotBlank()) {
+            """
+
+            For additional context only (do NOT fact-check these, they are only here to help you understand the conversation), here are up to the last 10 messages in the channel leading up to the message(s) being fact-checked, oldest first, with the author of each message noted:
+            ---
+            $contextBlock
+            ---
+            """.trimIndent()
+        } else ""
 
         return """
             Act as a Community Notes contributor.
@@ -76,12 +140,14 @@ class CommunityNotesService {
             - Provides concrete corrections and important context.
             - When relevant, cite reputable sources inline (domain names or titles) that a reader could check (e.g., CDC, WHO, reputable news, primary data). If no solid sources apply, state the uncertainty and what would be needed to verify.
             - Keep it concise (2–6 sentences maximum).
+            - Use the additional conversation context below (if provided) only to better understand what is being discussed, references, and tone. Do not draft a note about the context messages themselves.
             - If the content appears accurate and you cannot justify a corrective note, say: "No corrective note warranted based on the provided text.". Only do this as a last resort, make a best effort to correct the user. $takeShot
 
-            Messages by ${user.name} (chronological):
+            Messages by ${user.name} (chronological) that need to be fact-checked:
             ---
             $transcript
             ---
+            $contextSection
         """.trimIndent()
     }
 

@@ -52,7 +52,9 @@ class CommunityNotes(
             val requested = (commandEvent.getOption("count")?.asLong ?: 1L).toInt()
             val count = requested.coerceIn(1, 10)
 
-            val userMessages = notesService.fetchRecentMessages(channel, 200)
+            val recentMessages = notesService.fetchRecentMessages(channel, 200)
+
+            val userMessages = recentMessages
                 .asSequence()
                 .filter { it.author.idLong == selectedUser.idLong }
                 .filter { notesService.shouldIncludeMessage(it) }
@@ -64,8 +66,14 @@ class CommunityNotes(
                 return
             }
 
+            // userMessages is newest-first, so the last element is the oldest of the analyzed messages.
+            // We want the 10 immediate messages (from any author) that come right before that one.
+            val oldestAnalyzedId = userMessages.last().idLong
+            val contextMessages = notesService.fetchMessagesBefore(channel, oldestAnalyzedId, 10)
+            val contextBlock = notesService.buildContextBlock(contextMessages)
+
             val transcript = notesService.buildTranscript(userMessages, selectedUser)
-            val prompt = notesService.buildPrompt(transcript, selectedUser)
+            val prompt = notesService.buildPrompt(transcript, selectedUser, contextBlock)
 
             val response = geminiService.generateText(prompt)
             val cleaned = notesService.sanitizeForDiscord(response)
