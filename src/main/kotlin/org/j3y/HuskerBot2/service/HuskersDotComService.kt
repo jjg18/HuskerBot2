@@ -6,4 +6,5 @@ import net.dv8tion.jda.api.entities.MessageEmbed
 interface HuskersDotComService {
     fun getSchedule(year: Int): JsonNode
     fun getScheduleById(scheduleId: Int): JsonNode
+    fun getVolleyballSchedule(): JsonNode
 }
