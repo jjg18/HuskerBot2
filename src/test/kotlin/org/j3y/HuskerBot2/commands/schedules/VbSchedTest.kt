@@ -54,7 +54,7 @@ class VbSchedTest {
         val emptyData = Mockito.mock(JsonNode::class.java)
         `when`(emptyData.isEmpty).thenReturn(true)
         `when`(apiJson.path("data")).thenReturn(emptyData)
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
@@ -108,13 +108,13 @@ class VbSchedTest {
         dataArray.add(game1)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
         // verify deferReply and service call
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         
         // verify a message was sent
         Mockito.verify(hook).sendMessage(Mockito.anyString())
@@ -132,7 +132,7 @@ class VbSchedTest {
         val msgAction = Mockito.mock(WebhookMessageCreateAction::class.java) as WebhookMessageCreateAction<Message>
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(msgAction)
 
-        `when`(service.getScheduleById(1363)).thenThrow(RuntimeException("API Error"))
+        `when`(service.getVolleyballSchedule()).thenThrow(RuntimeException("API Error"))
 
         cmd.execute(event)
 
@@ -187,13 +187,13 @@ class VbSchedTest {
         dataArray.add(game1)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
         // Verify the execution completed without errors
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         Mockito.verify(hook).sendMessage(Mockito.anyString())
         Mockito.verify(msgAction).queue()
     }
@@ -241,13 +241,13 @@ class VbSchedTest {
         dataArray.add(game1)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
         // Verify the execution completed without errors
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         Mockito.verify(hook).sendMessage(Mockito.anyString())
         Mockito.verify(msgAction).queue()
     }
@@ -295,13 +295,13 @@ class VbSchedTest {
         dataArray.add(game1)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
         // Verify the execution completed without errors
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         Mockito.verify(hook).sendMessage(Mockito.anyString())
         Mockito.verify(msgAction).queue()
     }
@@ -349,13 +349,13 @@ class VbSchedTest {
         dataArray.add(game1)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
         // Verify the execution completed without errors
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         Mockito.verify(hook).sendMessage(Mockito.anyString())
         Mockito.verify(msgAction).queue()
     }
@@ -403,13 +403,13 @@ class VbSchedTest {
         dataArray.add(game1)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
         // Verify the execution completed without errors
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         Mockito.verify(hook).sendMessage(Mockito.anyString())
         Mockito.verify(msgAction).queue()
     }
@@ -457,13 +457,13 @@ class VbSchedTest {
         dataArray.add(game1)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
         // Verify the execution completed without errors
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         Mockito.verify(hook).sendMessage(Mockito.anyString())
         Mockito.verify(msgAction).queue()
     }
@@ -511,13 +511,13 @@ class VbSchedTest {
         dataArray.add(game1)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
         // Verify the execution completed without errors
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         Mockito.verify(hook).sendMessage(Mockito.anyString())
         Mockito.verify(msgAction).queue()
     }
@@ -565,13 +565,13 @@ class VbSchedTest {
         dataArray.add(game1)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
         // Verify the execution completed without errors
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         Mockito.verify(hook).sendMessage(Mockito.anyString())
         Mockito.verify(msgAction).queue()
     }
@@ -633,7 +633,7 @@ class VbSchedTest {
         dataArray.add(nonNebraskaGame)
         apiJson.set("data", dataArray)
 
-        `when`(service.getScheduleById(1363)).thenReturn(apiJson)
+        `when`(service.getVolleyballSchedule()).thenReturn(apiJson)
 
         cmd.execute(event)
 
@@ -647,7 +647,7 @@ class VbSchedTest {
         
         // Verify the execution completed without errors
         Mockito.verify(replyAction).queue()
-        Mockito.verify(service).getScheduleById(1363)
+        Mockito.verify(service).getVolleyballSchedule()
         Mockito.verify(msgAction).queue()
     }
 

@@ -16,6 +16,7 @@ class DefaultHuskersDotComService : HuskersDotComService {
         2028 to 244
     )
     val url: String = "https://huskers.com/website-api/schedule-events?filter[schedule_id]={schedId}&filter[hide_from_specific_sport_schedule]=false&include=conference.image,opponent.customLogo,opponent.officialLogo,opponentLogo,postEventArticle.image,preEventArticle.image,presentedBy,promotionalItems.image,schedule.sport,scheduleEventLinks.icon,scheduleEventResult,secondOpponent.customLogo,secondOpponent.officialLogo,secondOpponentLogo,tournament&per_page=100&sort=datetime&page=1"
+    val sportsUrl: String = "https://huskers.com/website-api/sports?per_page=100"
 
     val client = RestTemplate()
 
@@ -33,5 +34,20 @@ class DefaultHuskersDotComService : HuskersDotComService {
         val uri = UriComponentsBuilder.fromUriString(url).buildAndExpand(scheduleId)
 
         return client.getForObject(uri.toUriString(), JsonNode::class.java) ?: throw RuntimeException("Unable to retrieve schedule for id $scheduleId")
+    }
+
+    override fun getVolleyballSchedule(): JsonNode {
+        val sports = client.getForObject(sportsUrl, JsonNode::class.java)
+            ?: throw RuntimeException("Unable to retrieve sports list")
+        val volleyball = sports.path("data").firstOrNull { sport ->
+            sport.path("slug").asText() == "volleyball" &&
+                (sport.path("active").isMissingNode || sport.path("active").asBoolean(false))
+        } ?: throw RuntimeException("Unable to find active volleyball sport")
+
+        val scheduleId = volleyball.path("schedule_id").takeIf { it.isIntegralNumber }
+            ?.asInt()?.takeIf { it > 0 }
+            ?: throw RuntimeException("Active volleyball sport has no valid schedule_id")
+
+        return getScheduleById(scheduleId)
     }
 }

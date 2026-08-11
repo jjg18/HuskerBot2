@@ -20,8 +20,6 @@ class VbSched : SlashCommand() {
     @Autowired
     lateinit var huskersDotComService: HuskersDotComService
 
-    private val volleyballScheduleId = 1363
-
     override fun getCommandKey(): String = "vb"
     override fun getDescription(): String = "Get the Nebraska volleyball schedule"
     override fun isSubcommand(): Boolean = true
@@ -32,7 +30,7 @@ class VbSched : SlashCommand() {
         commandEvent.deferReply().queue()
 
         try {
-            val apiJson: JsonNode = huskersDotComService.getScheduleById(volleyballScheduleId)
+            val apiJson: JsonNode = huskersDotComService.getVolleyballSchedule()
             val events = apiJson.path("data")
 
             if (events.isEmpty) {

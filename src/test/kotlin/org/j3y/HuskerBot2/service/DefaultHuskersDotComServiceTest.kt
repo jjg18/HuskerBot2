@@ -86,4 +86,38 @@ class DefaultHuskersDotComServiceTest {
             assertTrue(ex.message!!.contains("Unable to retrieve schedule for year 2026"))
         }
     }
+
+    @Test
+    fun `getVolleyballSchedule finds active volleyball schedule and retrieves events`() {
+        val sports = mapper.readTree("""{"data":[{"slug":"football","active":true,"schedule_id":1},{"slug":"volleyball","active":true,"schedule_id":1363}]}""")
+        val schedule = mapper.readTree("""{"data":[{"id":1}]}""")
+
+        Mockito.mockConstruction(RestTemplate::class.java) { mock, _ ->
+            `when`(mock.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(JsonNode::class.java)))
+                .thenReturn(sports, schedule)
+        }.use { construction ->
+            val result = DefaultHuskersDotComService().getVolleyballSchedule()
+
+            assertEquals(schedule, result)
+            val mockRt = construction.constructed()[0]
+            val urls = ArgumentCaptor.forClass(String::class.java)
+            Mockito.verify(mockRt, Mockito.times(2)).getForObject(urls.capture(), ArgumentMatchers.eq(JsonNode::class.java))
+            assertEquals("https://huskers.com/website-api/sports?per_page=100", urls.allValues[0])
+            assertTrue(urls.allValues[1].contains("filter[schedule_id]=1363"))
+        }
+    }
+
+    @Test
+    fun `getVolleyballSchedule fails when active volleyball schedule id is missing`() {
+        val sports = mapper.readTree("""{"data":[{"slug":"volleyball","active":true}]}""")
+
+        Mockito.mockConstruction(RestTemplate::class.java) { mock, _ ->
+            `when`(mock.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(JsonNode::class.java))).thenReturn(sports)
+        }.use {
+            val ex = assertThrows(RuntimeException::class.java) {
+                DefaultHuskersDotComService().getVolleyballSchedule()
+            }
+            assertTrue(ex.message!!.contains("valid schedule_id"))
+        }
+    }
 }
