@@ -97,7 +97,7 @@ class GeminiTest {
         setupJdaSpamChannelMocks(event)
 
         // Service should return a response; capture argument via verify after execution
-        `when`(svc.generateText(Mockito.anyString())).thenReturn("Hello @here world")
+        `when`(svc.generateText(Mockito.anyString(), Mockito.any())).thenReturn("Hello @here world")
 
         // Capture the message sent back to the user with the link
         @Suppress("UNCHECKED_CAST")
@@ -142,7 +142,7 @@ class GeminiTest {
         val (_, spamChannel, msgCreateAction) = setupJdaSpamChannelMocks(event)
 
         val longText = "A".repeat(1024 * 3 + 10)
-        `when`(svc.generateText(Mockito.anyString())).thenReturn(longText)
+        `when`(svc.generateText(Mockito.anyString(), Mockito.any())).thenReturn(longText)
 
         // Need to capture the embeds passed to spamChannel
         val embedsCaptor = ArgumentCaptor.forClass(MutableList::class.java as Class<MutableList<MessageEmbed>>)
@@ -193,7 +193,7 @@ class GeminiTest {
         `when`(user.avatarUrl).thenReturn(null)
 
         val (_, spamChannel, msgCreateAction) = setupJdaSpamChannelMocks(event)
-        `when`(svc.generateText(Mockito.anyString())).thenReturn("")
+        `when`(svc.generateText(Mockito.anyString(), Mockito.any())).thenReturn("")
 
         val embedsCaptor = ArgumentCaptor.forClass(MutableList::class.java as Class<MutableList<MessageEmbed>>)
         `when`(spamChannel.sendMessageEmbeds(embedsCaptor.capture())).thenReturn(msgCreateAction)
@@ -230,7 +230,7 @@ class GeminiTest {
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(messageAction)
         `when`(messageAction.setEphemeral(true)).thenReturn(messageAction)
 
-        `when`(svc.generateText(Mockito.anyString())).thenThrow(RuntimeException("boom"))
+        `when`(svc.generateText(Mockito.anyString(), Mockito.any())).thenThrow(RuntimeException("boom"))
 
         cmd.execute(event)
 

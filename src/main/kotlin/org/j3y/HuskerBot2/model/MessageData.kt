@@ -33,7 +33,9 @@ data class SimpleEmbed(
     val title: String? = null,
     val description: String? = null,
     val footer: String? = null,
+    val footerIconUrl: String? = null,
     val thumbnailUrl: String? = null,
+    val imageUrl: String? = null,
     val color: Int? = null
 ) : Serializable {
     fun toJdaEmbed(): MessageEmbed {
@@ -41,7 +43,8 @@ data class SimpleEmbed(
         if (title != null) eb.setTitle(title)
         if (description != null) eb.setDescription(description)
         if (thumbnailUrl != null) eb.setThumbnail(thumbnailUrl)
-        if (footer != null) eb.setFooter(footer)
+        if (imageUrl != null) eb.setImage(imageUrl)
+        if (footer != null) eb.setFooter(footer, footerIconUrl)
         if (color != null) eb.setColor(color)
         return eb.build()
     }
