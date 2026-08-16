@@ -26,7 +26,7 @@ open class GoogleGeminiService(
     private val mapper = ObjectMapper()
 
     @Retryable(includes = [HttpStatusCodeException::class], maxRetries = 5, delay = 5000)
-    open fun generateText(prompt: String): String {
+    open fun generateText(prompt: String, temperature: Double? = null): String {
         if (apiKey.isBlank()) {
             return "Gemini is not configured. Please set gemini.api-key in application.yml or environment."
         }
@@ -42,7 +42,7 @@ open class GoogleGeminiService(
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
 
-        val body = mapOf(
+        val body = mutableMapOf<String, Any>(
             "contents" to listOf(
                 mapOf(
                     "parts" to listOf(
@@ -51,6 +51,9 @@ open class GoogleGeminiService(
                 )
             )
         )
+        if (temperature != null) {
+            body["generationConfig"] = mapOf("temperature" to temperature)
+        }
 
         val entity = HttpEntity(body, headers)
         var response: JsonNode? = null

@@ -136,7 +136,7 @@ class SummarizeTest {
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(messageAction)
 
         // Stub service and capture prompt via verify afterwards
-        `when`(svc.generateText(Mockito.anyString())).thenReturn("Summary with @here mention")
+        `when`(svc.generateText(Mockito.anyString(), Mockito.any())).thenReturn("Summary with @here mention")
 
         // Event user for footer
         val evUser = Mockito.mock(User::class.java)
@@ -209,7 +209,7 @@ class SummarizeTest {
         `when`(channel.history).thenReturn(history)
         `when`(history.retrievePast(Mockito.anyInt())).thenReturn(rest)
         `when`(rest.complete()).thenReturn(newestFirst)
-        `when`(svc.generateText(Mockito.anyString())).thenReturn("ok")
+        `when`(svc.generateText(Mockito.anyString(), Mockito.any())).thenReturn("ok")
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(messageAction)
 
         // Mock JDA spam channel flow
@@ -270,7 +270,7 @@ class SummarizeTest {
         `when`(channel.history).thenReturn(history)
         `when`(history.retrievePast(Mockito.anyInt())).thenReturn(rest)
         `when`(rest.complete()).thenReturn(listOf(m1))
-        `when`(svc.generateText(Mockito.anyString())).thenReturn("")
+        `when`(svc.generateText(Mockito.anyString(), Mockito.any())).thenReturn("")
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(messageAction)
 
         val evUser = Mockito.mock(User::class.java)
@@ -328,7 +328,7 @@ class SummarizeTest {
         `when`(hook.sendMessage(Mockito.anyString())).thenReturn(messageAction)
         `when`(messageAction.setEphemeral(true)).thenReturn(messageAction)
 
-        `when`(svc.generateText(Mockito.anyString())).thenThrow(RuntimeException("boom"))
+        `when`(svc.generateText(Mockito.anyString(), Mockito.any())).thenThrow(RuntimeException("boom"))
 
         cmd.execute(event)
 
