@@ -17,7 +17,7 @@ class Gameday : SlashCommand() {
 
     override fun getCommandKey(): String = "gameday"
     override fun getDescription(): String = "Gameday commands"
-    override fun getPermissions(): DefaultMemberPermissions = DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS)
+    override fun getPermissions(): DefaultMemberPermissions = DefaultMemberPermissions.enabledFor(Permission.MESSAGE_MANAGE)
     override fun getSubcommands(): List<SlashCommand> = listOf(
         gamedayOn, gamedayOff
     )
