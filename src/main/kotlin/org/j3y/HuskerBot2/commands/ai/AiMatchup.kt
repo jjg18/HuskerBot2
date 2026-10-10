@@ -54,7 +54,7 @@ class AiMatchup(
             }
 
             val prompt = buildPrompt(team1, team2, year, t1Games, t2Games)
-            val analysis = gemini.generateText(prompt)
+            val analysis = gemini.generateText(prompt, null, true)
 
             val chunks = splitIntoEmbedChunks(analysis)
 

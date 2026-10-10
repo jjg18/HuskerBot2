@@ -7,13 +7,53 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.awt.Color
+import java.time.Duration
+import java.time.Instant
 import java.time.OffsetDateTime
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
 @Service
 class CommunityNotesService {
 
     private val log = LoggerFactory.getLogger(CommunityNotesService::class.java)
+
+    private val cooldown: Duration = Duration.ofMinutes(15)
+    private val lastUsedByGuild = ConcurrentHashMap<Long, Instant>()
+
+    /**
+     * Checks whether Community Notes can be used in the given guild right now, based on the
+     * server-wide cooldown. If allowed, atomically records the current time as the last-used time.
+     *
+     * @return null if allowed (and the usage was just recorded), or the [Duration] remaining before
+     *         the cooldown expires if it is currently on cooldown.
+     */
+    fun tryAcquireCooldown(guildId: Long): Duration? {
+        val now = Instant.now()
+        var remaining: Duration? = null
+        lastUsedByGuild.compute(guildId) { _, lastUsed ->
+            if (lastUsed != null) {
+                val elapsed = Duration.between(lastUsed, now)
+                if (elapsed < cooldown) {
+                    remaining = cooldown.minus(elapsed)
+                    return@compute lastUsed
+                }
+            }
+            now
+        }
+        return remaining
+    }
+
+    fun formatRemaining(remaining: Duration): String {
+        val totalSeconds = remaining.seconds.coerceAtLeast(0)
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        return if (minutes > 0) {
+            "${minutes}m ${seconds}s"
+        } else {
+            "${seconds}s"
+        }
+    }
 
     fun fetchRecentMessages(channel: GuildMessageChannel, limit: Int): List<Message> {
         return try {
