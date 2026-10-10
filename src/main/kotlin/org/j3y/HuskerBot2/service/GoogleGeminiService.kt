@@ -26,7 +26,7 @@ open class GoogleGeminiService(
     private val mapper = ObjectMapper()
 
     @Retryable(includes = [HttpStatusCodeException::class], maxRetries = 5, delay = 5000)
-    open fun generateText(prompt: String, temperature: Double? = null): String {
+    open fun generateText(prompt: String, temperature: Double? = null, useWebSearch: Boolean = false): String {
         if (apiKey.isBlank()) {
             return "Gemini is not configured. Please set gemini.api-key in application.yml or environment."
         }
@@ -53,6 +53,11 @@ open class GoogleGeminiService(
         )
         if (temperature != null) {
             body["generationConfig"] = mapOf("temperature" to temperature)
+        }
+        if (useWebSearch) {
+            // Enables Gemini's web grounding tool so prompts can be answered using
+            // up-to-date information from the internet.
+            body["tools"] = listOf(mapOf("google_search" to mapOf<String, Any>()))
         }
 
         val entity = HttpEntity(body, headers)

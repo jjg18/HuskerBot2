@@ -79,7 +79,7 @@ backup:
 
 gemini:
   base-url: "https://generativelanguage.googleapis.com"
-  model: "models/gemini-3-flash-preview"
+  model: "models/gemini-3.8-flash"
   api-key: ${GEMINI_KEY:}
 
 ---

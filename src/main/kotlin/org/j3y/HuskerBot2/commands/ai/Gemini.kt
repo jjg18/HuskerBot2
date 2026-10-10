@@ -24,7 +24,8 @@ class Gemini(
     override fun getDescription(): String = "Send a text prompt to Google Gemini (free tier)"
 
     override fun getOptions(): List<OptionData> = listOf(
-        OptionData(OptionType.STRING, "prompt", "The text prompt to send to Gemini", true)
+        OptionData(OptionType.STRING, "prompt", "The text prompt to send to Gemini", true),
+        OptionData(OptionType.BOOLEAN, "search", "Whether to search for relevant information in the prompt", false)
     )
 
     override fun execute(commandEvent: SlashCommandInteractionEvent) {
@@ -35,9 +36,10 @@ class Gemini(
                 commandEvent.hook.sendMessage("Please provide a prompt.").setEphemeral(true).queue()
                 return
             }
+            val search = commandEvent.getOption("search")?.asBoolean ?: false
             val sendPrompt = "$prompt\nPlease keep the response between 1 and 4 paragraphs."
 
-            val response = geminiService.generateText(sendPrompt)
+            val response = geminiService.generateText(sendPrompt, null, search)
             val message = sanitizeForDiscord(response)
 
             // Split the response into 1024-character chunks and send as multiple embeds (one embed per chunk)

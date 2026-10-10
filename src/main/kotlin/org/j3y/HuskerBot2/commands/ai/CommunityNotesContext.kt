@@ -31,6 +31,20 @@ class CommunityNotesContext(
 
             if (channel == null) { return }
 
+            val guildId = commandEvent.guild?.idLong
+            if (guildId == null) {
+                commandEvent.hook.sendMessage("This command can only be used in a server.").setEphemeral(true).queue()
+                return
+            }
+
+            val remainingCooldown = notesService.tryAcquireCooldown(guildId)
+            if (remainingCooldown != null) {
+                commandEvent.hook.sendMessage(
+                    "Community Notes can only be used once every 15 minutes per server. Please try again in ${notesService.formatRemaining(remainingCooldown)}."
+                ).setEphemeral(true).queue()
+                return
+            }
+
             val selectedUser = commandEvent.target.author
             if (selectedUser == null) {
                 commandEvent.hook.sendMessage("You must specify a user.").queue()
@@ -47,7 +61,7 @@ class CommunityNotesContext(
 
             val prompt = notesService.buildPrompt(transcript, selectedUser, contextBlock)
 
-            val response = geminiService.generateText(prompt)
+            val response = geminiService.generateText(prompt, null, true)
             val cleaned = notesService.sanitizeForDiscord(response)
 
             val embed = notesService.buildEmbed(
