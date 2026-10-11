@@ -7,7 +7,8 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
-import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
 import org.j3y.HuskerBot2.commands.cfb.Compare
@@ -168,8 +169,8 @@ class CompareTest {
         assertTrue(fields.any { it.name?.startsWith("Recent Games") == true })
         assertTrue(fields.any { it.name == "Last Meeting" })
 
-        // Ensure no buttons added (we can only ensure we did not call setActionRow)
-        Mockito.verify(messageAction, Mockito.never()).setActionRow(Mockito.anyList<Any>() as MutableList<Button>)
+        // Ensure no buttons added (we can only ensure we did not call setComponents)
+        Mockito.verify(messageAction, Mockito.never()).setComponents(Mockito.any(ActionRow::class.java))
     }
 
     @Test
@@ -203,20 +204,20 @@ class CompareTest {
         `when`(event.getOption("team2")).thenReturn(opt2)
         `when`(hook.sendMessageEmbeds(Mockito.any(MessageEmbed::class.java))).thenReturn(messageAction)
 
-        // Capture buttons from setActionRow
-        val buttonsCaptor = ArgumentCaptor.forClass(MutableList::class.java as Class<MutableList<Button>>)
-        `when`(messageAction.setActionRow(Mockito.anyList<Button>())).thenAnswer { inv ->
+        // Capture components from setComponents
+        val rowCaptor = ArgumentCaptor.forClass(ActionRow::class.java)
+        `when`(messageAction.setComponents(rowCaptor.capture())).thenAnswer { inv ->
             // pass-through mock behavior returning same action
             messageAction
         }
 
         cmd.execute(event)
 
-        // Ensure setActionRow called and inspect buttons argument
-        Mockito.verify(messageAction).setActionRow(buttonsCaptor.capture())
+        // Ensure setComponents called and inspect buttons argument
+        Mockito.verify(messageAction).setComponents(Mockito.any(ActionRow::class.java))
         Mockito.verify(messageAction).queue()
 
-        val buttons: List<Button> = buttonsCaptor.value
+        val buttons: List<Button> = rowCaptor.value.buttons
         assertEquals(4, buttons.size)
         // first two should be disabled on first page
         assertTrue(buttons[0].isDisabled)
@@ -225,8 +226,8 @@ class CompareTest {
         assertFalse(buttons[3].isDisabled)
 
         // Verify component ids carry state including page 0 and user id
-        assertTrue(buttons[0].id!!.startsWith("compare|first|Nebraska|Iowa|0|u1"))
-        assertTrue(buttons[2].id!!.startsWith("compare|next|Nebraska|Iowa|0|u1"))
+        assertTrue(buttons[0].customId!!.startsWith("compare|first|Nebraska|Iowa|0|u1"))
+        assertTrue(buttons[2].customId!!.startsWith("compare|next|Nebraska|Iowa|0|u1"))
     }
 
     @Test
@@ -245,13 +246,13 @@ class CompareTest {
         // Simulate component id for next from page 0
         `when`(event.componentId).thenReturn("compare|next|Nebraska|Iowa|0|u1")
         `when`(event.editMessageEmbeds(Mockito.any(MessageEmbed::class.java))).thenReturn(messageAction)
-        `when`(messageAction.setActionRow(Mockito.anyList<Button>())).thenReturn(messageAction)
+        `when`(messageAction.setComponents(Mockito.any(ActionRow::class.java))).thenReturn(messageAction)
 
         cmd.buttonEvent(event)
 
         val embedCaptor = ArgumentCaptor.forClass(MessageEmbed::class.java)
         Mockito.verify(event).editMessageEmbeds(embedCaptor.capture())
-        Mockito.verify(messageAction).setActionRow(Mockito.anyList())
+        Mockito.verify(messageAction).setComponents(Mockito.any(ActionRow::class.java))
         Mockito.verify(messageAction).queue()
 
         // Now simulate clicking last from page 1 (mid)

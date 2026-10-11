@@ -8,7 +8,8 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.UserSnowflake
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
-import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.buttons.Button
 import org.j3y.HuskerBot2.model.NflGameEntity
 import org.j3y.HuskerBot2.model.NflPick
 import org.j3y.HuskerBot2.repository.NflGameRepo
@@ -118,7 +119,7 @@ class NflPickemProcessing {
                         Button.primary("nflpickem|$eventId|$awayId", awayLabel),
                         Button.primary("nflpickem|$eventId|$homeId", homeLabel)
                     )
-                    channel.sendMessageEmbeds(embed).setActionRow(buttons).queue()
+                    channel.sendMessageEmbeds(embed).setComponents(ActionRow.of(buttons)).queue()
                 }
             }
 
@@ -133,8 +134,8 @@ class NflPickemProcessing {
                         """)
                     .setColor(Color(0x00, 0x66, 0xCC))
                     .build()
-            ).addActionRow(
-                Button.primary("nflpickem|mypicks|${week}", "View My Picks")
+            ).addComponents(
+                ActionRow.of(Button.primary("nflpickem|mypicks|${week}", "View My Picks"))
             ).queue()
         } catch (e: Exception) {
             log.error("Failed to post pick'em", e)

@@ -3,8 +3,8 @@ package org.j3y.HuskerBot2.automation.pickem.nfl
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
-import net.dv8tion.jda.api.interactions.components.ActionRow
-import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction
 import net.dv8tion.jda.api.requests.restaction.interactions.MessageEditCallbackAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
@@ -174,7 +174,7 @@ class NflPickemListenerTest {
         val rowCaptor = ArgumentCaptor.forClass(ActionRow::class.java)
         Mockito.verify(b.message).editMessageComponents(rowCaptor.capture())
         val row = rowCaptor.value
-        val buttons = row.components.filterIsInstance<Button>()
+        val buttons = row.buttons
         org.junit.jupiter.api.Assertions.assertEquals(2, buttons.size)
         // Labels should contain team names and counts in parentheses
         org.junit.jupiter.api.Assertions.assertTrue(buttons[0].label?.contains("AwayX") == true)
@@ -182,8 +182,8 @@ class NflPickemListenerTest {
         org.junit.jupiter.api.Assertions.assertTrue(buttons[0].label?.contains("(") == true && buttons[0].label?.contains(")") == true)
         org.junit.jupiter.api.Assertions.assertTrue(buttons[1].label?.contains("(") == true && buttons[1].label?.contains(")") == true)
         // Ensure both buttons created with correct ids
-        org.junit.jupiter.api.Assertions.assertEquals("nflpickem|200|300", buttons[0].id)
-        org.junit.jupiter.api.Assertions.assertEquals("nflpickem|200|400", buttons[1].id)
+        org.junit.jupiter.api.Assertions.assertEquals("nflpickem|200|300", buttons[0].customId)
+        org.junit.jupiter.api.Assertions.assertEquals("nflpickem|200|400", buttons[1].customId)
 
         // Verify defer edit called
         Mockito.verify(b.deferEditAction).queue()

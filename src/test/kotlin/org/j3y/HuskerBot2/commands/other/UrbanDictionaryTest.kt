@@ -7,7 +7,8 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
-import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction
 import net.dv8tion.jda.api.requests.restaction.interactions.MessageEditCallbackAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
@@ -129,9 +130,9 @@ class UrbanDictionaryTest {
         `when`(event.hook).thenReturn(hook)
         `when`(hook.sendMessageEmbeds(Mockito.any(MessageEmbed::class.java))).thenReturn(messageAction)
 
-        // Capture buttons passed to setActionRow
-        val buttonsCaptor = ArgumentCaptor.forClass(MutableList::class.java as Class<MutableList<Button>>)
-        `when`(messageAction.setActionRow(Mockito.anyList<Button>())).thenAnswer { messageAction }
+        // Capture components passed to setComponents
+        val rowCaptor = ArgumentCaptor.forClass(ActionRow::class.java)
+        `when`(messageAction.setComponents(rowCaptor.capture())).thenAnswer { messageAction }
 
         cmd.execute(event)
 
@@ -155,15 +156,15 @@ class UrbanDictionaryTest {
         assertEquals("a1", authorField!!.value)
 
         // Verify buttons
-        Mockito.verify(messageAction).setActionRow(buttonsCaptor.capture())
-        val buttons: List<Button> = buttonsCaptor.value
+        Mockito.verify(messageAction).setComponents(Mockito.any(ActionRow::class.java))
+        val buttons: List<Button> = rowCaptor.value.buttons
         assertEquals(4, buttons.size)
         assertTrue(buttons[0].isDisabled) // first disabled at index 0
         assertTrue(buttons[1].isDisabled) // prev disabled at index 0
         assertFalse(buttons[2].isDisabled) // next enabled
         assertFalse(buttons[3].isDisabled) // last enabled
-        assertEquals("ud|first|foo|0|2|u1", buttons[0].id)
-        assertEquals("ud|next|foo|0|2|u1", buttons[2].id)
+        assertEquals("ud|first|foo|0|2|u1", buttons[0].customId)
+        assertEquals("ud|next|foo|0|2|u1", buttons[2].customId)
 
         Mockito.verify(replyAction).queue()
         Mockito.verify(messageAction).queue()
@@ -218,12 +219,12 @@ class UrbanDictionaryTest {
         // start at index 0, click next
         `when`(event.componentId).thenReturn("ud|next|foo|0|2|u1")
         `when`(event.editMessageEmbeds(Mockito.any(MessageEmbed::class.java))).thenReturn(editAction)
-        `when`(editAction.setActionRow(Mockito.anyList<Button>())).thenReturn(editAction)
+        `when`(editAction.setComponents(Mockito.any(ActionRow::class.java))).thenReturn(editAction)
 
         cmd.buttonEvent(event)
 
         Mockito.verify(event).editMessageEmbeds(Mockito.any(MessageEmbed::class.java))
-        Mockito.verify(editAction).setActionRow(Mockito.anyList())
+        Mockito.verify(editAction).setComponents(Mockito.any(ActionRow::class.java))
         Mockito.verify(editAction).queue()
 
         // from index 1, click last (should remain at last)
@@ -306,7 +307,7 @@ class UrbanDictionaryTest {
         `when`(event.deferReply()).thenReturn(replyAction)
         `when`(event.hook).thenReturn(hook)
         `when`(hook.sendMessageEmbeds(Mockito.any(MessageEmbed::class.java))).thenReturn(messageAction)
-        `when`(messageAction.setActionRow(Mockito.anyList<Button>())).thenReturn(messageAction)
+        `when`(messageAction.setComponents(Mockito.any(ActionRow::class.java))).thenReturn(messageAction)
 
         cmd.execute(event)
 

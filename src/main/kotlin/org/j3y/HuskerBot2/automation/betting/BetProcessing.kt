@@ -5,7 +5,8 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.entities.UserSnowflake
-import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.buttons.Button
 import org.j3y.HuskerBot2.commands.betting.BetShow
 import org.j3y.HuskerBot2.repository.BetRepo
 import org.j3y.HuskerBot2.repository.MessageRepo
@@ -144,9 +145,11 @@ class BetProcessing {
             EmbedBuilder().setTitle("Winner: Nebraska or ${gameEntity.opponent}")
                 .setDescription("Pick the winner.")
                 .build()
-        ).addActionRow(
-            Button.danger("huskerbets|winner|$week|Nebraska", "Nebraska"),
-            Button.secondary("huskerbets|winner|$week|Opponent", gameEntity.opponent)
+        ).addComponents(
+            ActionRow.of(
+                Button.danger("huskerbets|winner|$week|Nebraska", "Nebraska"),
+                Button.secondary("huskerbets|winner|$week|Opponent", gameEntity.opponent)
+            )
         ).queue()
 
         // Over/Under
@@ -154,9 +157,11 @@ class BetProcessing {
             EmbedBuilder().setTitle("Over/Under: ${overUnder}")
                 .setDescription("Pick the over or the under.")
                 .build()
-        ).addActionRow(
-            Button.success("huskerbets|overunder|$week|Over", "Over"),
-            Button.secondary("huskerbets|overunder|$week|Under", "Under")
+        ).addComponents(
+            ActionRow.of(
+                Button.success("huskerbets|overunder|$week|Over", "Over"),
+                Button.secondary("huskerbets|overunder|$week|Under", "Under")
+            )
         ).queue()
 
         // Spread Beat
@@ -164,9 +169,11 @@ class BetProcessing {
             EmbedBuilder().setTitle("Spread: ${formattedSpread}")
                 .setDescription("Pick who will beat the spread")
                 .build()
-        ).addActionRow(
-            Button.danger("huskerbets|spread|$week|Nebraska", "Nebraska"),
-            Button.secondary("huskerbets|spread|$week|Opponent", gameEntity.opponent)
+        ).addComponents(
+            ActionRow.of(
+                Button.danger("huskerbets|spread|$week|Nebraska", "Nebraska"),
+                Button.secondary("huskerbets|spread|$week|Opponent", gameEntity.opponent)
+            )
         ).queue()
 
         log.info("Posted bets for week $week")

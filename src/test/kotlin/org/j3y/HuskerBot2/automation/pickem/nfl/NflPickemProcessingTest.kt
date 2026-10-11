@@ -10,7 +10,8 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
-import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
 import net.dv8tion.jda.api.requests.restaction.PermissionOverrideAction
 import org.j3y.HuskerBot2.model.NflGameEntity
@@ -169,8 +170,8 @@ class NflPickemProcessingTest {
         // sendMessage(String) and sendMessageEmbeds(embed) stubs
         `when`(channel.sendMessage(Mockito.anyString())).thenReturn(msgAction)
         `when`(channel.sendMessageEmbeds(Mockito.any(MessageEmbed::class.java))).thenReturn(msgAction)
-        `when`(msgAction.addActionRow(Mockito.any(Button::class.java))).thenReturn(msgAction)
-        `when`(msgAction.setActionRow(Mockito.anyList())).thenReturn(msgAction)
+        `when`(msgAction.addComponents(Mockito.any(ActionRow::class.java))).thenReturn(msgAction)
+        `when`(msgAction.setComponents(Mockito.any(ActionRow::class.java))).thenReturn(msgAction)
         `when`(msgAction.queue()).then { null }
 
         // In case ensurePickemChannelReadOnly tries to upsert
@@ -199,15 +200,15 @@ class NflPickemProcessingTest {
         `when`(pickRepo.findByGameId(2002L)).thenReturn(picks)
 
         val ch = mockChannelWithPermissions("chan")
-        `when`(ch.msgAction.addActionRow(Mockito.any(net.dv8tion.jda.api.interactions.components.ItemComponent::class.java))).thenReturn(ch.msgAction)
+        `when`(ch.msgAction.addComponents(Mockito.any(ActionRow::class.java))).thenReturn(ch.msgAction)
 
         // Capture the per-game embed and action row buttons
         val embedCaptor = ArgumentCaptor.forClass(MessageEmbed::class.java)
         `when`(ch.channel.sendMessageEmbeds(embedCaptor.capture())).thenReturn(ch.msgAction)
 
-        // Also capture any setActionRow, buttons list
-        val buttonsCaptor = ArgumentCaptor.forClass(List::class.java as Class<List<Button>>)
-        `when`(ch.msgAction.setActionRow(buttonsCaptor.capture())).thenReturn(ch.msgAction)
+        // Also capture any setComponents, action row
+        val rowCaptor = ArgumentCaptor.forClass(ActionRow::class.java)
+        `when`(ch.msgAction.setComponents(rowCaptor.capture())).thenReturn(ch.msgAction)
         
         processing.postWeeklyPickem(2)
 
@@ -237,10 +238,10 @@ class NflPickemProcessingTest {
         assertEquals("Line", fields[3].name)
 
         // Verify two buttons with proper ids and counts reflected in labels
-        val buttons = buttonsCaptor.value
+        val buttons = rowCaptor.value.buttons
         assertEquals(2, buttons.size)
-        val id0 = buttons[0].id
-        val id1 = buttons[1].id
+        val id0 = buttons[0].customId
+        val id1 = buttons[1].customId
         assertNotNull(id0)
         assertNotNull(id1)
         assertTrue(id0!!.startsWith("nflpickem|2002|"))
@@ -268,7 +269,7 @@ class NflPickemProcessingTest {
 
         val msgCaptor = ArgumentCaptor.forClass(String::class.java)
         `when`(ch.channel.sendMessage(msgCaptor.capture())).thenReturn(ch.msgAction)
-        `when`(ch.msgAction.addActionRow(Mockito.any(net.dv8tion.jda.api.interactions.components.ItemComponent::class.java))).thenReturn(ch.msgAction)
+        `when`(ch.msgAction.addComponents(Mockito.any(ActionRow::class.java))).thenReturn(ch.msgAction)
 
         processing.postWeeklyPickem(2)
 
@@ -345,7 +346,7 @@ class NflPickemProcessingTest {
         root.set("events", mapper.createArrayNode())
         `when`(espn.getNflScoreboard(Mockito.anyInt())).thenReturn(root)
         
-        `when`(msgAction.addActionRow(Mockito.any(net.dv8tion.jda.api.interactions.components.ItemComponent::class.java))).thenReturn(msgAction)
+        `when`(msgAction.addComponents(Mockito.any(ActionRow::class.java))).thenReturn(msgAction)
 
         processing.postWeeklyPickem(2)
 

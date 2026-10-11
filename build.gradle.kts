@@ -1,9 +1,9 @@
 plugins {
-	kotlin("jvm") version "2.3.21"
-	kotlin("plugin.spring") version "2.3.21"
-	id("org.springframework.boot") version "4.0.6"
+	kotlin("jvm") version "2.4.20"
+	kotlin("plugin.spring") version "2.4.20"
+	id("org.springframework.boot") version "4.1.1"
 	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("plugin.jpa") version "2.3.21"
+	kotlin("plugin.jpa") version "2.4.20"
 }
 
 group = "org.j3y"
@@ -26,13 +26,13 @@ dependencies {
 	// Playwright for headless browser fetching
 	implementation("com.microsoft.playwright:playwright:1.47.0")
 	// Jsoup for HTML parsing/stripping
-	implementation("org.jsoup:jsoup:1.18.1")
+	implementation("org.jsoup:jsoup:1.23.2")
 	implementation("org.springframework.boot:spring-boot-starter-cache")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
 	implementation("com.github.kagkarlsson:db-scheduler-spring-boot-4-starter:16.7.+")
 	implementation("com.github.ben-manes.caffeine:caffeine")
-	implementation("net.dv8tion:JDA:5.6.+")
+	implementation("net.dv8tion:JDA:6.7.+")
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.+")
     implementation("org.apache.httpcomponents.core5:httpcore5:5.+")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
