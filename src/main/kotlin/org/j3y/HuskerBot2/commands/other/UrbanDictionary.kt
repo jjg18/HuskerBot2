@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.components.actionrow.ActionRow
 import org.j3y.HuskerBot2.commands.SlashCommand
 import org.j3y.HuskerBot2.service.UrbanDictionaryService
 import org.slf4j.LoggerFactory
@@ -48,7 +49,7 @@ class UrbanDictionary : SlashCommand() {
             val embed = buildEmbed(defs[index], index, total)
             val buttons = buildButtons(term, index, total, userId)
 
-            commandEvent.hook.sendMessageEmbeds(embed).setActionRow(buttons).queue()
+            commandEvent.hook.sendMessageEmbeds(embed).setComponents(ActionRow.of(buttons)).queue()
         } catch (e: Exception) {
             log.error("Error executing /urban command", e)
             commandEvent.hook.sendMessage("Sorry, there was an error searching Urban Dictionary.").queue()
@@ -99,13 +100,13 @@ class UrbanDictionary : SlashCommand() {
                 .build()
 
             val buttons = listOf(
-                net.dv8tion.jda.api.interactions.components.buttons.Button.secondary("ud|first|$term|$newIndex|$total|$userId", "⏮ First").withDisabled(newIndex <= 0),
-                net.dv8tion.jda.api.interactions.components.buttons.Button.secondary("ud|prev|$term|$newIndex|$total|$userId", "◀ Prev").withDisabled(newIndex <= 0),
-                net.dv8tion.jda.api.interactions.components.buttons.Button.secondary("ud|next|$term|$newIndex|$total|$userId", "Next ▶").withDisabled(newIndex >= total - 1),
-                net.dv8tion.jda.api.interactions.components.buttons.Button.secondary("ud|last|$term|$newIndex|$total|$userId", "Last ⏭").withDisabled(newIndex >= total - 1),
+                net.dv8tion.jda.api.components.buttons.Button.secondary("ud|first|$term|$newIndex|$total|$userId", "⏮ First").withDisabled(newIndex <= 0),
+                net.dv8tion.jda.api.components.buttons.Button.secondary("ud|prev|$term|$newIndex|$total|$userId", "◀ Prev").withDisabled(newIndex <= 0),
+                net.dv8tion.jda.api.components.buttons.Button.secondary("ud|next|$term|$newIndex|$total|$userId", "Next ▶").withDisabled(newIndex >= total - 1),
+                net.dv8tion.jda.api.components.buttons.Button.secondary("ud|last|$term|$newIndex|$total|$userId", "Last ⏭").withDisabled(newIndex >= total - 1),
             )
 
-            buttonEvent.editMessageEmbeds(embed).setActionRow(buttons).queue()
+            buttonEvent.editMessageEmbeds(embed).setComponents(ActionRow.of(buttons)).queue()
         } catch (e: Exception) {
             log.error("Error handling UD button interaction", e)
             buttonEvent.reply("An error occurred processing that action.").setEphemeral(true).queue()
@@ -129,7 +130,7 @@ class UrbanDictionary : SlashCommand() {
             .build()
     }
 
-    private fun buildButtons(term: String, index: Int, total: Int, userId: String): List<net.dv8tion.jda.api.interactions.components.buttons.Button> {
+    private fun buildButtons(term: String, index: Int, total: Int, userId: String): List<net.dv8tion.jda.api.components.buttons.Button> {
         val firstId = "ud|first|$term|$index|$total|$userId"
         val prevId = "ud|prev|$term|$index|$total|$userId"
         val nextId = "ud|next|$term|$index|$total|$userId"
@@ -137,10 +138,10 @@ class UrbanDictionary : SlashCommand() {
         val atStart = index <= 0
         val atEnd = index >= total - 1
         return listOf(
-            net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(firstId, "⏮ First").withDisabled(atStart),
-            net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(prevId, "◀ Prev").withDisabled(atStart),
-            net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(nextId, "Next ▶").withDisabled(atEnd),
-            net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(lastId, "Last ⏭").withDisabled(atEnd),
+            net.dv8tion.jda.api.components.buttons.Button.secondary(firstId, "⏮ First").withDisabled(atStart),
+            net.dv8tion.jda.api.components.buttons.Button.secondary(prevId, "◀ Prev").withDisabled(atStart),
+            net.dv8tion.jda.api.components.buttons.Button.secondary(nextId, "Next ▶").withDisabled(atEnd),
+            net.dv8tion.jda.api.components.buttons.Button.secondary(lastId, "Last ⏭").withDisabled(atEnd),
         )
     }
 

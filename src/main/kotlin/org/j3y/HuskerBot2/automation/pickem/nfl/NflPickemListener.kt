@@ -2,7 +2,8 @@ package org.j3y.HuskerBot2.automation.pickem.nfl
 
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.buttons.Button
 import org.j3y.HuskerBot2.commands.pickem.NflPickemShow
 import org.j3y.HuskerBot2.model.NflPick
 import org.j3y.HuskerBot2.repository.NflGameRepo
@@ -67,7 +68,7 @@ class NflPickemListener : ListenerAdapter() {
             )
 
             // Acknowledge ephemerally and also update the original message's action row
-            event.message.editMessageComponents(net.dv8tion.jda.api.interactions.components.ActionRow.of(updatedButtons)).queue()
+            event.message.editMessageComponents(ActionRow.of(updatedButtons)).queue()
 
             event.deferEdit().queue()
         } catch (e: Exception) {

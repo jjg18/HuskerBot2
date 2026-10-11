@@ -6,7 +6,8 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
-import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.buttons.Button
 import org.j3y.HuskerBot2.commands.SlashCommand
 import org.j3y.HuskerBot2.service.CfbMatchupService
 import org.slf4j.LoggerFactory
@@ -53,7 +54,7 @@ class Compare(
 
             if (matchupData.games.size > 5) {
                 val buttons = buildPaginationButtons(team1, team2, 0, matchupData.games.size, userId)
-                commandEvent.hook.sendMessageEmbeds(embed).setActionRow(buttons).queue()
+                commandEvent.hook.sendMessageEmbeds(embed).setComponents(ActionRow.of(buttons)).queue()
             } else {
                 commandEvent.hook.sendMessageEmbeds(embed).queue()
             }
@@ -96,7 +97,7 @@ class Compare(
             val embed = buildMatchupEmbed(matchupData, newPage)
             val buttons = buildPaginationButtons(team1, team2, newPage, matchupData.games.size, userId)
 
-            buttonEvent.editMessageEmbeds(embed).setActionRow(buttons).queue()
+            buttonEvent.editMessageEmbeds(embed).setComponents(ActionRow.of(buttons)).queue()
 
         } catch (e: Exception) {
             log.error("Error handling compare button interaction", e)
