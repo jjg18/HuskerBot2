@@ -1,9 +1,10 @@
 package org.j3y.HuskerBot2.commands.images
 
-import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.utils.FileUpload
 import org.j3y.HuskerBot2.commands.SlashCommand
 import org.springframework.stereotype.Component
 import java.net.URI
@@ -51,7 +52,23 @@ class Inspire : SlashCommand() {
                 "$commandUserMention wants to be inspired:"
             }
 
-            commandEvent.hook.sendMessage(message).addEmbeds(EmbedBuilder().setImage(imageUrl).build()).queue()
+            val imageRequest = HttpRequest.newBuilder()
+                .uri(URI.create(imageUrl))
+                .GET()
+                .build()
+            val imageResponse = client.send(imageRequest, HttpResponse.BodyHandlers.ofByteArray())
+            if (imageResponse.statusCode() !in 200..299) {
+                commandEvent.hook.sendMessage("Failed to download inspirational image. Please try again later.").queue()
+                return
+            }
+
+            val fileName = imageUrl.substringAfterLast('/').ifBlank { "inspire.jpg" }
+            val messageAction = commandEvent.hook.sendMessage(message)
+                .addFiles(FileUpload.fromData(imageResponse.body(), fileName))
+            if (optionUser != null) {
+                messageAction.setAllowedMentions(listOf(Message.MentionType.USER))
+            }
+            messageAction.queue()
         } catch (e: Exception) {
             commandEvent.hook.sendMessage("Error calling InspiroBot: ${e.message}").queue()
         }
