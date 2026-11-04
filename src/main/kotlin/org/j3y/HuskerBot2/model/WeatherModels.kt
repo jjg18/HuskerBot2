@@ -12,6 +12,30 @@ data class WeatherForecast(
     val micksTemp: String? = null
 )
 
+/** Where Nebraska plays a game, from the huskers.com schedule `venue_type` (home | away | neutral). */
+enum class GameSite(val label: String) {
+    HOME("Home"),
+    AWAY("Away"),
+    NEUTRAL("Neutral");
+
+    companion object {
+        // Anything that isn't explicitly home or neutral is a road game.
+        fun fromVenueType(venueType: String): GameSite = when (venueType.trim().lowercase()) {
+            "home" -> HOME
+            "neutral" -> NEUTRAL
+            else -> AWAY
+        }
+    }
+}
+
+/** The game a forecast is for, so the AI commentary is written about where the game is actually played. */
+data class ForecastGame(
+    val opponent: String,
+    val site: GameSite,
+    val location: String,
+    val venue: String?
+)
+
 data class GeocodingResult(
     val latitude: Double,
     val longitude: Double

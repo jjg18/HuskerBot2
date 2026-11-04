@@ -82,7 +82,7 @@ To build a jar:
   - /gameday off — Turns gameday mode off.
 
 - /gameday-weather
-  - Get weather forecast for the next Huskers game (location-aware, 7-day range).
+  - Get the weather forecast for the next Huskers game at its actual site (home, away, or neutral); the AI hot take is written for where the game is played. Games more than a week out use historical averages.
 
 - /image … Image management
   - /image add name:<string> url:<string>
