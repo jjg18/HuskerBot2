@@ -4,6 +4,8 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import org.j3y.HuskerBot2.commands.SlashCommand
+import org.j3y.HuskerBot2.model.ForecastGame
+import org.j3y.HuskerBot2.model.GameSite
 import org.j3y.HuskerBot2.model.ScheduleEntity
 import org.j3y.HuskerBot2.model.WeatherForecast
 import org.j3y.HuskerBot2.repository.ScheduleRepo
@@ -41,10 +43,10 @@ class GamedayWeather : SlashCommand() {
             }
             
             // Let WeatherService handle the API selection and fallback logic
-            val gameLocation = getGameLocation(nextGame)
-            val coordinates = weatherService.getCoordinates(gameLocation)
+            val forecastGame = toForecastGame(nextGame)
+            val coordinates = weatherService.getCoordinates(forecastGame.location)
             if (coordinates == null) {
-                commandEvent.hook.sendMessage("Unable to find location coordinates for $gameLocation.").queue()
+                commandEvent.hook.sendMessage("Unable to find location coordinates for ${forecastGame.location}.").queue()
                 return
             }
             
@@ -52,7 +54,8 @@ class GamedayWeather : SlashCommand() {
             val weather = weatherService.getWeatherForecast(
                 coordinates.latitude, 
                 coordinates.longitude, 
-                gameDateTime
+                gameDateTime,
+                forecastGame
             )
             
             if (weather == null) {
@@ -60,7 +63,7 @@ class GamedayWeather : SlashCommand() {
                 return
             }
             
-            val embed = createWeatherEmbed(nextGame, weather)
+            val embed = createWeatherEmbed(nextGame, forecastGame, weather)
             commandEvent.hook.sendMessageEmbeds(embed).queue()
             
         } catch (e: Exception) {
@@ -89,27 +92,22 @@ class GamedayWeather : SlashCommand() {
     }
 
     
-    private fun getGameLocation(scheduleEntity: ScheduleEntity): String {
-        return when {
-            scheduleEntity.venueType.equals("home", ignoreCase = true) -> "Lincoln, NE"
+    private fun toForecastGame(scheduleEntity: ScheduleEntity): ForecastGame {
+        val site = GameSite.fromVenueType(scheduleEntity.venueType)
+        val location = when {
+            site == GameSite.HOME -> "Lincoln, NE"
             scheduleEntity.location.isNotBlank() -> scheduleEntity.location
             else -> "Unknown Location"
         }
+        return ForecastGame(
+            opponent = scheduleEntity.opponent,
+            site = site,
+            location = location,
+            venue = scheduleEntity.venue.ifBlank { null }
+        )
     }
     
-    private fun getGameVenue(scheduleEntity: ScheduleEntity): String {
-        return when {
-            scheduleEntity.venueType.equals("home", ignoreCase = true) -> "Memorial Stadium"
-            scheduleEntity.location.isNotBlank() -> scheduleEntity.location
-            else -> "Unknown Venue"
-        }
-    }
-    
-    private fun isHomeGame(scheduleEntity: ScheduleEntity): Boolean {
-        return scheduleEntity.venueType.equals("home", ignoreCase = true)
-    }
-    
-    private fun createWeatherEmbed(game: ScheduleEntity, weather: WeatherForecast?): MessageEmbed {
+    private fun createWeatherEmbed(game: ScheduleEntity, forecastGame: ForecastGame, weather: WeatherForecast?): MessageEmbed {
         val embed = EmbedBuilder()
         
         embed.setTitle("🏈 Huskers Game Day Weather")
@@ -117,8 +115,8 @@ class GamedayWeather : SlashCommand() {
         
         embed.addField("🆚 Opponent", game.opponent, true)
         embed.addField("📅 Game Time", formatGameTime(game.dateTime), true)
-        embed.addField("📍 Location", getGameLocation(game), true)
-        embed.addField("🏠 Home/Away", if (isHomeGame(game)) "Home" else "Away", true)
+        embed.addField("📍 Location", forecastGame.location, true)
+        embed.addField("🏠 Home/Away", forecastGame.site.label, true)
         
         // Show venue type for dome games
         if (game.isDome == true) {

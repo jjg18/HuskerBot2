@@ -151,7 +151,7 @@ class WeatherService(
     }
     
     @Cacheable("weather-forecast", unless = "#result == null") 
-    fun getWeatherForecast(latitude: Double, longitude: Double, targetDate: LocalDateTime): WeatherForecast? {
+    fun getWeatherForecast(latitude: Double, longitude: Double, targetDate: LocalDateTime, game: ForecastGame): WeatherForecast? {
         try {
             val now = LocalDateTime.now()
             val hoursUntilGame = ChronoUnit.HOURS.between(now, targetDate)
@@ -160,14 +160,14 @@ class WeatherService(
             // Use Tomorrow Weather API if within 120 hours, otherwise fallback to NWS
             return if (hoursUntilGame <= 120) {
                 log.info("Using Tomorrow Weather API for forecast $hoursUntilGame hours out")
-                getTomorrowWeatherForecast(latitude, longitude, targetDate, hoursUntilGame)
+                getTomorrowWeatherForecast(latitude, longitude, targetDate, hoursUntilGame, game)
             } else if (daysUntilGame <= 7) {
                 log.info("Using NWS API for forecast $daysUntilGame days out (beyond Tomorrow Weather 120-hour limit)")
-                getNWSWeatherForecast(latitude, longitude, targetDate)
+                getNWSWeatherForecast(latitude, longitude, targetDate, game)
             } else {
                 // Beyond 7 days - use historical averages from Open-Meteo
                 log.info("Game is $daysUntilGame days out - using historical averages from Open-Meteo")
-                getHistoricalAverageForecast(latitude, longitude, targetDate)
+                getHistoricalAverageForecast(latitude, longitude, targetDate, game)
             }
         } catch (e: Exception) {
             log.error("Error getting weather forecast for $latitude, $longitude", e)
@@ -175,7 +175,7 @@ class WeatherService(
         }
     }
     
-    private fun getTomorrowWeatherForecast(latitude: Double, longitude: Double, targetDate: LocalDateTime, hoursUntilGame: Long): WeatherForecast? {
+    private fun getTomorrowWeatherForecast(latitude: Double, longitude: Double, targetDate: LocalDateTime, hoursUntilGame: Long, game: ForecastGame): WeatherForecast? {
         try {
             val headers = HttpHeaders()
             headers.set("Content-Type", "application/json")
@@ -198,7 +198,7 @@ class WeatherService(
             if (weatherData != null) {
                 val forecast = findTomorrowForecastForDate(weatherData, targetDate, timeline == "hourly")
                 return if (forecast != null) {
-                    addSnarkyDescription(forecast)
+                    addSnarkyDescription(forecast, game)
                 } else {
                     log.warn("No suitable Tomorrow Weather forecast found for $targetDate")
                     null
@@ -206,18 +206,18 @@ class WeatherService(
             }
         } catch (e: Exception) {
             log.error("Error getting Tomorrow Weather forecast, falling back to NWS", e)
-            return getNWSWeatherForecast(latitude, longitude, targetDate)
+            return getNWSWeatherForecast(latitude, longitude, targetDate, game)
         }
         return null
     }
     
-    private fun getNWSWeatherForecast(latitude: Double, longitude: Double, targetDate: LocalDateTime): WeatherForecast? {
+    private fun getNWSWeatherForecast(latitude: Double, longitude: Double, targetDate: LocalDateTime, game: ForecastGame): WeatherForecast? {
         try {
             val forecastData = getNWSForecast(latitude, longitude)
             if (forecastData != null) {
                 val forecast = findNWSForecastForDate(forecastData, targetDate)
                 return if (forecast != null) {
-                    addSnarkyDescription(forecast)
+                    addSnarkyDescription(forecast, game)
                 } else {
                     log.warn("No suitable NWS forecast found for $targetDate")
                     null
@@ -229,7 +229,7 @@ class WeatherService(
         return null
     }
     
-    private fun getHistoricalAverageForecast(latitude: Double, longitude: Double, targetDate: LocalDateTime): WeatherForecast? {
+    private fun getHistoricalAverageForecast(latitude: Double, longitude: Double, targetDate: LocalDateTime, game: ForecastGame): WeatherForecast? {
         try {
             val historicalAverage = getHistoricalAverages(latitude, longitude, targetDate.toLocalDate())
             if (historicalAverage != null) {
@@ -248,7 +248,7 @@ class WeatherService(
                     precipitationProbability = null,
                     micksTemp = "${tempK}K"
                 )
-                return addSnarkyDescriptionForHistorical(forecast, historicalAverage)
+                return addSnarkyDescriptionForHistorical(forecast, historicalAverage, game)
             }
         } catch (e: Exception) {
             log.error("Error getting historical average forecast for $latitude, $longitude on $targetDate", e)
@@ -361,9 +361,9 @@ class WeatherService(
         return parts.joinToString(". ") + "."
     }
     
-    private fun addSnarkyDescriptionForHistorical(forecast: WeatherForecast, avg: HistoricalWeatherAverage): WeatherForecast {
+    private fun addSnarkyDescriptionForHistorical(forecast: WeatherForecast, avg: HistoricalWeatherAverage, game: ForecastGame): WeatherForecast {
         return try {
-            val weatherPrompt = createHistoricalWeatherPrompt(avg)
+            val weatherPrompt = createHistoricalWeatherPrompt(avg, game)
             val snarkyDescription = googleGeminiService.generateText(weatherPrompt)
             forecast.copy(snarkyDescription = snarkyDescription)
         } catch (e: Exception) {
@@ -372,13 +372,15 @@ class WeatherService(
         }
     }
     
-    private fun createHistoricalWeatherPrompt(avg: HistoricalWeatherAverage): String {
+    private fun createHistoricalWeatherPrompt(avg: HistoricalWeatherAverage, game: ForecastGame): String {
         return """
             Create a hilariously snarky and unhinged weather forecast description for a Nebraska Huskers football game. 
             This is a HISTORICAL AVERAGE forecast (not a real-time prediction) because the game is more than a week away.
             Keep it under 100 words and make it brutally honest but entertaining. Include references to how this weather 
             will affect the game, the fans, and general Nebraska football culture. Feel free to joke about how we're 
             basically guessing based on history.
+            
+            ${describeGameSetting(game)}
             
             Historical weather details (${avg.yearsOfData}-year average):
             - Average High: ${avg.averageHigh}°F
@@ -484,9 +486,9 @@ class WeatherService(
         }
     }
     
-    private fun addSnarkyDescription(forecast: WeatherForecast): WeatherForecast {
+    private fun addSnarkyDescription(forecast: WeatherForecast, game: ForecastGame): WeatherForecast {
         return try {
-            val weatherPrompt = createWeatherPrompt(forecast)
+            val weatherPrompt = createWeatherPrompt(forecast, game)
             val snarkyDescription = googleGeminiService.generateText(weatherPrompt)
             forecast.copy(snarkyDescription = snarkyDescription)
         } catch (e: Exception) {
@@ -495,11 +497,13 @@ class WeatherService(
         }
     }
     
-    private fun createWeatherPrompt(forecast: WeatherForecast): String {
+    private fun createWeatherPrompt(forecast: WeatherForecast, game: ForecastGame): String {
         return """
             Create a hilariously snarky and unhinged weather forecast description for a Nebraska Huskers football game. 
             Keep it under 100 words and make it brutally honest but entertaining. Include references to how this weather 
             will affect the game, the fans, and general Nebraska football culture.
+            
+            ${describeGameSetting(game)}
             
             Weather details:
             - Temperature: ${forecast.temperature}°F
@@ -510,6 +514,21 @@ class WeatherService(
             
             Make it spicy but keep it family-friendly for Discord.
         """.trimIndent()
+    }
+    
+    /** Tells the model where the game is played; without it every forecast reads as a home game in Lincoln. */
+    private fun describeGameSetting(game: ForecastGame): String {
+        val venue = game.venue?.let { " at $it" } ?: ""
+        return when (game.site) {
+            GameSite.HOME -> "Game setting: ${game.opponent} at Nebraska, a HOME game$venue in ${game.location}. " +
+                    "The weather below is for ${game.location}."
+            GameSite.AWAY -> "Game setting: Nebraska at ${game.opponent}, an AWAY game$venue in ${game.location}. " +
+                    "The weather below is for ${game.location}, not Lincoln. Nebraska is the visiting team, so write about " +
+                    "the Huskers and their traveling fans dealing with these conditions on the road, and do not describe it as a home game."
+            GameSite.NEUTRAL -> "Game setting: Nebraska vs. ${game.opponent}, a NEUTRAL-SITE game$venue in ${game.location}. " +
+                    "The weather below is for ${game.location}, not Lincoln. Neither team is playing at home, " +
+                    "so do not describe it as a Nebraska home game."
+        }
     }
     
     private fun getWeatherCodeDescription(code: Int): String {
